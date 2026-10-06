@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import './style.css';
+import { createPuppy, createCareRoom } from './visuals.js';
 import { CareSession, OUTFIT_CATEGORIES } from './care.js';
 const texts={tr:{create:'Yeni arkadaşını bul',intro:'Karakterini seç, köpeği yakala ve köpüklerle temizle!',name:'Oyuncu adı',gender:'Karakter',girl:'Kız',boy:'Erkek',hair:'Saç',shirt:'Kıyafet',accessory:'Aksesuar',none:'Yok',hat:'Şapka',start:'Maceraya başla',chase:'Köpeği takip et!',chaseHelp:'WASD / ok tuşlarıyla koş. Yaklaşınca yakalama düğmesine bas.',catch:'Yakala',timing:'Doğru anda yakala!',timingHelp:'İşaret yeşil alandayken bas.',tap:'Şimdi!',wash:'Köpük zamanı',washHelp:'Baloncukları sürükleyip köpeğin üzerine bırak. Beklersen sabrı azalır!',patience:'Rahatlık',clean:'Temizlik',escaped:'Köpek parka kaçtı! Yeniden yakala; bu yıkamayı tekrar deneyeceğiz.',done:'Harika bir başlangıç!',doneHelp:'Yeni arkadaşın tertemiz! Fön, tüy kesimi ve giydirme sonraki sürümde.',again:'Yeniden oyna',near:'Biraz daha yaklaş',saved:'En iyi sonuç',move:'Hareket',pause:'Duraklat',resume:'Devam',paused:'Mola zamanı'},en:{create:'Find your new friend',intro:'Choose your character, catch the puppy and wash with bubbles!',name:'Player name',gender:'Character',girl:'Girl',boy:'Boy',hair:'Hair',shirt:'Outfit',accessory:'Accessory',none:'None',hat:'Hat',start:'Start adventure',chase:'Follow the puppy!',chaseHelp:'Run with WASD / arrow keys. Get close and press Catch.',catch:'Catch',timing:'Catch at the right moment!',timingHelp:'Press when the marker is in the green area.',tap:'Now!',wash:'Bubble time',washHelp:'Drag bubbles onto the puppy. Waiting reduces comfort!',patience:'Comfort',clean:'Cleanliness',escaped:'The puppy ran to the park! Catch again and retry this wash.',done:'A lovely beginning!',doneHelp:'Your new friend is clean! Drying, grooming and dressing come in a later version.',again:'Play again',near:'Get a little closer',saved:'Best result',move:'Move',pause:'Pause',resume:'Resume',paused:'Break time'},de:{create:'Finde deinen neuen Freund',intro:'Wähle deine Figur, fange den Hund und wasche ihn mit Seifenblasen!',name:'Spielername',gender:'Figur',girl:'Mädchen',boy:'Junge',hair:'Haare',shirt:'Kleidung',accessory:'Accessoire',none:'Keins',hat:'Hut',start:'Abenteuer starten',chase:'Folge dem Hund!',chaseHelp:'Laufe mit WASD / Pfeiltasten. Geh näher und drücke Fangen.',catch:'Fangen',timing:'Fange im richtigen Moment!',timingHelp:'Drücke, wenn die Markierung im grünen Bereich ist.',tap:'Jetzt!',wash:'Seifenblasenzeit',washHelp:'Ziehe die Seifenblasen auf den Hund. Beim Warten sinkt sein Wohlbefinden!',patience:'Wohlbefinden',clean:'Sauberkeit',escaped:'Der Hund ist in den Park gelaufen! Fange ihn erneut und wiederhole die Wäsche.',done:'Ein toller Anfang!',doneHelp:'Dein neuer Freund ist sauber! Föhnen, Fellpflege und Anziehen kommen später.',again:'Erneut spielen',near:'Geh etwas näher',saved:'Bestes Ergebnis',move:'Bewegen',pause:'Pause',resume:'Weiter',paused:'Zeit für eine Pause'}};
 let lang='tr',stage='create',paused=false,misses=0,marker=0,angle=0,elapsed=0,bubbles=[],selectedBubble=null;
@@ -38,11 +39,11 @@ let activeZone = null;
 const zoneNames = ['head', 'back', 'frontPaws', 'backPaws'];
 const t=k=>texts[lang][k];
 const app=document.querySelector('#app');
-app.innerHTML=`<canvas id="world"></canvas><header><strong>🐾 World Pet Wash <small>PROTOTYPE · 02</small></strong><div><select id="language" aria-label="Language"><option value="tr">Türkçe</option><option value="en">English</option><option value="de">Deutsch</option></select><button id="pause">Ⅱ</button></div></header><div id="panel"></div><div id="hud"></div><div id="controls"><div id="pad"><button data-dir="up">▲</button><div><button data-dir="left">◀</button><button data-dir="down">▼</button><button data-dir="right">▶</button></div></div><button id="action"></button></div><div id="toast" role="status"></div><div id="bubble-layer"></div><div id="dryer-layer"></div><div id="wardrobe"></div><footer>World Pet Wash · browser prototype</footer>`;
+app.innerHTML=`<canvas id="world"></canvas><header><strong>🐾 World Pet Wash <small>PROTOTYPE · 03</small></strong><div><select id="language" aria-label="Language"><option value="tr">Türkçe</option><option value="en">English</option><option value="de">Deutsch</option></select><button id="pause">Ⅱ</button></div></header><div id="panel"></div><div id="hud"></div><div id="controls"><div id="pad"><button data-dir="up">▲</button><div><button data-dir="left">◀</button><button data-dir="down">▼</button><button data-dir="right">▶</button></div></div><button id="action"></button></div><div id="toast" role="status"></div><div id="bubble-layer"></div><div id="dryer-layer"></div><div id="wardrobe"></div><footer>World Pet Wash · browser prototype</footer>`;
 const canvas=document.querySelector('#world'),panel=document.querySelector('#panel'),hud=document.querySelector('#hud'),action=document.querySelector('#action'),layer=document.querySelector('#bubble-layer');
-const renderer=new THREE.WebGLRenderer({canvas,antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.shadowMap.enabled=true;renderer.setClearColor('#b8e5ec');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;renderer.setClearColor('#b8e5ec');
 const scene=new THREE.Scene();scene.fog=new THREE.Fog('#b8e5ec',35,75);const camera=new THREE.PerspectiveCamera(48,innerWidth/innerHeight,.1,150);
-scene.add(new THREE.HemisphereLight(0xffffff,0x7e9763,2.5));const sun=new THREE.DirectionalLight(0xfff3d9,3);sun.position.set(8,18,10);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-30,right:30,top:30,bottom:-30});scene.add(sun);
+scene.add(new THREE.HemisphereLight(0xffffff,0x7e9763,1.7));const sun=new THREE.DirectionalLight(0xfff3d9,3);sun.position.set(8,18,10);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.normalBias=.035;Object.assign(sun.shadow.camera,{left:-30,right:30,top:30,bottom:-30});scene.add(sun);
 const mat=c=>new THREE.MeshStandardMaterial({color:c,roughness:.8});
 function mesh(geo,color,parent,x=0,y=0,z=0){const m=new THREE.Mesh(geo,mat(color));m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m;}
 const sphere=(r,c,p,x,y,z)=>mesh(new THREE.SphereGeometry(r,16,12),c,p,x,y,z);
@@ -51,30 +52,33 @@ const park=new THREE.Group();scene.add(park);mesh(new THREE.CylinderGeometry(27,
 for(let i=0;i<30;i++){const a=i/30*Math.PI*2,r=20+(i%3);const tree=new THREE.Group();tree.position.set(Math.sin(a)*r,0,Math.cos(a)*r);park.add(tree);mesh(new THREE.CylinderGeometry(.18,.3,2.5,8),'#99775b',tree,0,1.25,0);sphere(1.8,i%2?'#5d9e68':'#73b57b',tree,0,3.3,0);}
 for(let i=0;i<45;i++){const a=i*2.4,r=11+(i%8);sphere(.12,['#fff5ce','#f79caf','#b49de2'][i%3],park,Math.sin(a)*r,.12,Math.cos(a)*r);}
 box(6,4,4,'#f5e6d2',park,-13,2,-10);mesh(new THREE.ConeGeometry(5,2,4),'#dd8971',park,-13,5,-10).rotation.y=Math.PI/4;box(1.4,2.3,.1,'#79b8c1',park,-13,1.15,-7.95);
-const clinic=new THREE.Group();scene.add(clinic);clinic.visible=false;box(20,.3,20,'#d7e5e3',clinic,0,-.2,0);box(20,8,.3,'#f9f1e7',clinic,0,4,-5);box(.3,8,16,'#f0dfd2',clinic,-8,4,0);box(5,.7,3,'#7eb4b9',clinic,0,.35,0);box(5.2,.2,3.2,'#f9ffff',clinic,0,.8,0);box(1.2,.25,.1,'#ec938b',clinic,0,4,-4.8);box(.25,1.2,.1,'#ec938b',clinic,0,4,-4.8);
+const careRoom=createCareRoom();const clinic=careRoom.root;scene.add(clinic);clinic.visible=false;
 const player=new THREE.Group();scene.add(player);const shirt=box(.65,.8,.4,'#ec987e',player,0,1.1,0);sphere(.35,'#f4c3a0',player,0,1.85,0);const hair=sphere(.37,'#603f30',player,0,2,0);hair.scale.y=.65;const hat=mesh(new THREE.CylinderGeometry(.48,.48,.15,20),'#f1d47b',player,0,2.2,0);hat.visible=false;const legs=[box(.2,.65,.23,'#456279',player,-.18,.4,0),box(.2,.65,.23,'#456279',player,.18,.4,0)];box(.18,.65,.2,'#f4c3a0',player,-.47,1.1,0);box(.18,.65,.2,'#f4c3a0',player,.47,1.1,0);
-const dog=new THREE.Group();scene.add(dog);const coat='#bc875d';const body=sphere(.62,coat,dog,0,.75,0);body.scale.set(.7,.8,1.35);sphere(.43,coat,dog,0,1.05,.75);sphere(.25,'#e5c7a2',dog,0,.9,1.08);sphere(.1,'#403a3c',dog,0,.98,1.29);for(const s of [-1,1]){sphere(.055,'#302e35',dog,s*.19,1.16,1.09);const ear=sphere(.24,'#895a42',dog,s*.37,1.05,.68);ear.scale.set(.6,1.7,.7);for(const z of [-.5,.5])box(.15,.5,.18,coat,dog,s*.3,.28,z);}const tail=box(.14,.14,.7,coat,dog,0,.95,-.94);tail.rotation.x=-.6;const collar=mesh(new THREE.TorusGeometry(.28,.06,8,20),'#70b8bd',dog,0,.95,.49);const dirt=[];for(let i=0;i<8;i++)dirt.push(sphere(.13,'#796c51',dog,(i%2?.35:-.35),.9+(i%3)*.08,-.6+i*.15));
+const puppy=createPuppy();const dog=puppy.root;const dirt=puppy.dirt;scene.add(dog);
 const dryerLayer = document.querySelector('#dryer-layer');
 const wardrobe = document.querySelector('#wardrobe');
 const outfits = {};
 for (const category of OUTFIT_CATEGORIES) {
   const group = new THREE.Group();
-  dog.add(group);
+  (category === 'bow' || category === 'glasses' || category === 'hat' ? puppy.head : dog).add(group);
   group.visible = false;
   outfits[category] = group;
 }
 // Original accessories, attached to the dog so they stay on in the final scene.
-for (const x of [-.14, .14]) sphere(.16, '#70b8bd', outfits.bow, x, 1.52, .8);
-sphere(.07, '#70b8bd', outfits.bow, 0, 1.52, .88);
-for (const x of [-.2, .2]) mesh(new THREE.TorusGeometry(.14,.035,8,20), '#70b8bd', outfits.glasses, x,1.18,1.15);
-box(.12,.035,.035,'#70b8bd',outfits.glasses,0,1.18,1.15);
-mesh(new THREE.CylinderGeometry(.55,.55,.08,24),'#70b8bd',outfits.hat,0,1.5,.65);
-mesh(new THREE.CylinderGeometry(.3,.38,.28,24),'#70b8bd',outfits.hat,0,1.67,.65);
-const sweater = sphere(.65,'#70b8bd',outfits.clothes,0,.75,-.08);
-sweater.scale.set(.73,.83,1.18);
-const zonePoints = [new THREE.Vector3(0,1.2,.85), new THREE.Vector3(0,1.1,-.55), new THREE.Vector3(-.35,.3,.5), new THREE.Vector3(.35,.3,-.5)];
+for (const x of [-.095, .095]) sphere(.095, '#70b8bd', outfits.bow, x, .37, .08);
+sphere(.05, '#70b8bd', outfits.bow, 0, .37, .16);
+outfits.bow.position.set(-.28,-.12,.18);
+for (const x of [-.2, .2]) mesh(new THREE.TorusGeometry(.14,.035,8,20), '#70b8bd', outfits.glasses, x,.075,.37);
+box(.12,.035,.035,'#70b8bd',outfits.glasses,0,.075,.37);
+mesh(new THREE.CylinderGeometry(.55,.55,.08,24),'#70b8bd',outfits.hat,0,.34,-.06);
+mesh(new THREE.CylinderGeometry(.3,.38,.28,24),'#70b8bd',outfits.hat,0,.51,-.06);
+const sweater = sphere(.65,'#70b8bd',outfits.clothes,0,.8,-.08);
+sweater.scale.set(.72,.77,1.29);
+const shirtFront=sphere(.3,'#70b8bd',outfits.clothes,0,.83,.85);
+shirtFront.scale.set(.9,.95,.14);
+const zonePoints = [new THREE.Vector3(0,1.56,.8), new THREE.Vector3(0,1.26,-.45), new THREE.Vector3(-.3,.3,.6), new THREE.Vector3(.3,.3,-.55)];
 const wetSpots = zonePoints.map(point => {
-  const drop = sphere(.14, '#7bd2e8', dog, point.x, point.y, point.z);
+  const drop = sphere(.065, '#7bd2e8', dog, point.x, point.y, point.z);
   drop.scale.y = 1.4;
   drop.visible = false;
   return drop;
@@ -177,7 +181,7 @@ function enterCare() {
   stopDryer(); clearBubbles(); toast('');
   stage = care.phase;
   park.visible = false; clinic.visible = true; player.visible = false;
-  dog.position.set(0,.9,0); dog.rotation.set(0,stage === 'dry' ? 1.1 : .3,0);
+  dog.position.set(0,.83,0); dog.rotation.set(0,stage === 'dry' ? 1.1 : .3,0);
   for (const d of dirt) d.visible = stage === 'wash';
   for (const drop of wetSpots) drop.visible = stage === 'dry';
   showOutfit();
@@ -218,6 +222,6 @@ if(stage==='dry'){
   else if(finished)enterCare();
   else updateCareHud();
 }
-tail.rotation.y=Math.sin(elapsed*7)*.35;}
-let target,look;if(stage==='chase'||stage==='timing'){target=player.position.clone().add(new THREE.Vector3(-Math.sin(angle)*6,4,-Math.cos(angle)*6));look=player.position.clone().add(new THREE.Vector3(Math.sin(angle)*3,1,Math.cos(angle)*3));}else if(['wash','dry','dress','done'].includes(stage)){const compact=innerHeight<600;const dressing=stage==='dress';target=new THREE.Vector3(dressing&&innerWidth>500?2:0,3.6,compact?5.8:7);look=new THREE.Vector3(dressing&&innerWidth>500?2:0,compact?2.5:1.6,0);}else{target=new THREE.Vector3(5,3.5,7);look=new THREE.Vector3(0,1,0);dog.position.set(2,0,0);}camera.position.lerp(target,1-Math.exp(-dt*6));camera.lookAt(look);if(stage==='dry')updateDryer();renderer.render(scene,camera);}
+}
+let target,look;if(stage==='chase'||stage==='timing'){target=player.position.clone().add(new THREE.Vector3(-Math.sin(angle)*6,4,-Math.cos(angle)*6));look=player.position.clone().add(new THREE.Vector3(Math.sin(angle)*3,1,Math.cos(angle)*3));}else if(['wash','dry','dress','done'].includes(stage)){const compact=innerHeight<600;const dressing=stage==='dress';target=new THREE.Vector3(dressing&&innerWidth>500?2:0,3.6,compact?5.8:7);look=new THREE.Vector3(dressing&&innerWidth>500?2:0,compact?2.5:1.6,0);}else{target=new THREE.Vector3(5,3.5,7);look=new THREE.Vector3(0,1,0);dog.position.set(2,0,0);}camera.position.lerp(target,1-Math.exp(-dt*6));camera.lookAt(look);if(stage==='dry')updateDryer();const wet=stage==='wash'?care.clean/100:stage==='dry'?1-care.dryness/100:0;if(!paused){puppy.animate(elapsed,{running:stage==='chase',wet,comfort:care.comfort,blowing:stage==='dry'&&activeZone!==null});const airTarget=stage==='dry'&&activeZone!==null?dog.localToWorld(zonePoints[activeZone].clone()):null;careRoom.animate(elapsed,{blowing:!!airTarget,target:airTarget});}renderer.render(scene,camera);}
 camera.position.set(5,3.5,7);renderUI();loop();
