@@ -98,8 +98,9 @@ export function createPuppy() {
     patch.rotation.z=(i%2?1:-1)*.2;dirt.push(patch);
   }
   const dryColor=new THREE.Color('#d7a463'),wetColor=new THREE.Color('#a78151');
-  function animate(time, { running=false, wet=0, comfort=100, blowing=false }={}) {
+  function animate(time, { running=false, wet=0, comfort=100, blowing=false, knocking=false }={}) {
     for(let i=0;i<legPivots.length;i++)legPivots[i].rotation.x=running?Math.sin(time*13+(i===0||i===3?0:Math.PI))*.45:0;
+    if(knocking)legPivots[0].rotation.x=-1.1;
     body.scale.y=.46*(1+Math.sin(time*2.5)*.012);
     head.rotation.x=running?Math.sin(time*13)*.025:Math.sin(time*1.7)*.025;
     head.rotation.z=comfort<40?Math.sin(time*9)*.045:Math.sin(time*1.2)*.035;
@@ -204,8 +205,12 @@ export function createCareRoom() {
   air.visible=false;
   // This light only runs with the room; no additional shadow map is allocated.
   const warmLight=new THREE.PointLight('#ffe2bd',10,14,2);warmLight.position.set(-3,4,1);root.add(warmLight);
-  function animate(time, {blowing=false,target=null}={}) {
-    if(blowing&&target) {
+  function animate(time, {blowing=false,target=null,knock=0}={}) {
+    if(knock>0) {
+      const progress=1-knock/1.2;
+      dryer.position.set(.8+progress*2.2,1.5+Math.sin(progress*Math.PI)*1.2,.9-progress*2);
+      dryer.rotation.set(progress*8,progress*5,progress*4);air.visible=false;
+    }else if(blowing&&target) {
       dryer.position.copy(target).add(new THREE.Vector3(.8,.25,.65));
       dryer.lookAt(target);
       air.visible=true;air.scale.z=.95+Math.sin(time*25)*.1;

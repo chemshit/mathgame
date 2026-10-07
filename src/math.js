@@ -1,23 +1,15 @@
-// Prices and answers are integer Rappen, avoiding decimal currency rounding.
-export class PurchaseQuiz {
-  constructor(balance, price) {
-    this.balance = balance;
-    this.price = price;
-    this.step = 0;
-    this.correct = false;
+// All calculations stay in integer Rappen; children answer using both units.
+export class MoneyQuestion {
+  constructor(left, right, operation = 'subtract') {
+    this.left = left; this.right = right; this.operation = operation;
   }
-  get complete() { return this.step === 2; }
+  get answer() { return this.operation === 'add' ? this.left + this.right : this.left - this.right; }
   check(francs, rappen) {
-    if (this.complete) return false;
-    const expected = this.step === 0 ? this.price : this.balance - this.price;
-    this.correct = /^\d+$/.test(francs) && /^\d+$/.test(rappen) &&
-      Number(francs) === Math.floor(expected / 100) && Number(rappen) === expected % 100;
-    return this.correct;
+    return /^\d+$/.test(francs) && /^\d+$/.test(rappen) &&
+      Number(francs) === Math.floor(this.answer / 100) && Number(rappen) === this.answer % 100;
   }
-  advance() {
-    if (!this.correct || this.complete) return false;
-    this.step++;
-    this.correct = false;
-    return true;
-  }
+}
+export function collectionQuestion(random = Math.random) {
+  const amount = () => (1 + Math.floor(random() * 10)) * 100 + (1 + Math.floor(random() * 9)) * 10;
+  return new MoneyQuestion(amount(), amount(), 'add');
 }

@@ -33,4 +33,8 @@ Kız ve erkek farklı başlangıç saçları ve kıyafet detaylarıyla gelir. D�
 
 ![Karakter seçimi](docs/character.png)
 
-Şapka alışverişinde iki matematik sorusu vardır: Rappen olarak verilen fiyatı Frank ve Rappen'e dönüştürme ve satın alma sonrası kalan parayı hesaplama. Cevaplar yan yana Frank ve Rappen kutularına yazılır (örneğin 10 Frank ve 70 Rappen); Rappen kutusu 0–99 arasında olmalıdır. Bir birim yoksa 0 yazılır. İki doğru cevaptan sonra satın alma düğmesi açılır. Yanlış cevapta ipucu gösterilir; para kesilmez, köpeğin rahatlığı etkilenmez. Vazgeçme ve Escape ücretsizdir. Sorular Türkçe, İngilizce ve Almanca destekler. Diğer bakım alışverişleri mevcut şekilde devam eder.
+Her ücretli baloncuk, fön başlatma ve kıyafet denemesinde kalan para sorusu sorulur. Fiyatlar soruda da Frank/Rappen biçiminde görünür; cevaplar yan yana Frank ve Rappen kutularına yazılır. Rappen kısmı 0–99 olmalıdır; olmayan birime 0 yazılır. Yanlış cevap veya vazgeçme para kesmez. Soru açıkken oyun ve rahatlık sayacı durur. Doğru cevaptan sonra satın alma onaylanır.
+
+Para toplamak için parka gitmeden önce rastgele Frank/Rappen toplama sorusu çözülür; örneğin 4 Frank 10 Rappen + 10 Frank 90 Rappen = 15 Frank 0 Rappen. Soru ödül para vermez, parka erişim sağlar. Dönüşte yarım kalan bakım korunur.
+
+Fön ısısı kırmızı alana (>65) girer girmez köpek patisiyle fönü iter ve fön havada dönerek uzaklaşır. Fön aşaması sıfırlanır, tamamlanan yıkama korunur. Yeni soruyu çözüp fönü yeniden satın almak gerekir; önceki ödeme iade edilmez. Bu özellikler Türkçe, İngilizce ve Almanca desteklidir.

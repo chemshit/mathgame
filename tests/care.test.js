@@ -26,25 +26,23 @@ test('moving the dryer between zones finishes without overheating', () => {
   assert.equal(care.dryness, 100);
   assert.equal(care.comfort, 100);
 });
-test('holding on one spot can make the dog escape, even if that spot is dry', () => {
-  const care = washed();
-  for (let frame = 0; frame < 120; frame++) care.dry(.05, 0);
-  assert.equal(care.comfort, 0);
-  assert.equal(care.phase, 'dry');
-  assert.equal(care.wetness[0], 0);
-  care.resetCurrentPhase();
-  assert.equal(care.clean, 100);
-  assert.equal(care.comfort, 100);
-  assert.equal(care.dryness, 0);
+test('dryer rejects immediately on entering red, before comfort runs out', () => {
+  const care=washed();care.heat[0]=65;
+  care.dry(.001,0);
+  assert.equal(care.dryerRejected,true);assert.equal(care.comfort,100);
+  assert.equal(care.phase,'dry');
+  const wet=care.wetness[0];care.dry(1,0);assert.equal(care.wetness[0],wet);
+  care.resetCurrentPhase();assert.equal(care.dryerRejected,false);
+  assert.equal(care.clean,100);assert.equal(care.dryness,0);
 });
-test('release cools the dryer zone and recovers comfort', () => {
+test('release cools the dryer zone before the red threshold', () => {
   const care = washed();
-  for (let frame = 0; frame < 60; frame++) care.dry(.05, 0);
+  for (let frame = 0; frame < 40; frame++) care.dry(.05, 0);
   const comfort = care.comfort;
   const heat = care.heat[0];
   for (let frame = 0; frame < 20; frame++) care.dry(.05, null);
   assert.ok(care.heat[0] < heat);
-  assert.ok(care.comfort > comfort);
+  assert.equal(care.comfort,comfort);assert.equal(care.dryerRejected,false);
 });
 test('dress rejection escapes after four mistakes and retries only dressing', () => {
   const care = washed();

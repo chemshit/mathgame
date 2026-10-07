@@ -10,6 +10,7 @@ export class CareSession {
     this.comfort = 100;
     if (this.phase === 'wash') this.clean = 0;
     if (this.phase === 'dry') {
+      this.dryerRejected = false;
       this.wetness = [100, 100, 100, 100];
       this.heat = [0, 0, 0, 0];
     }
@@ -26,13 +27,13 @@ export class CareSession {
   }
   tickWash(dt) { this.comfort = Math.max(0, this.comfort - dt * 3); }
   dry(dt, activeZone) {
-    if (this.phase !== 'dry') return false;
+    if (this.phase !== 'dry' || this.dryerRejected) return false;
     const validZone = Number.isInteger(activeZone) && activeZone >= 0 && activeZone < 4;
     for (let i = 0; i < 4; i++) {
       if (validZone && i === activeZone) {
         this.wetness[i] = Math.max(0, this.wetness[i] - dt * 30);
         this.heat[i] = Math.min(100, this.heat[i] + dt * 32);
-        if (this.heat[i] > 65) this.comfort = Math.max(0, this.comfort - dt * 30);
+        if (this.heat[i] > 65) { this.dryerRejected = true; return false; }
       } else this.heat[i] = Math.max(0, this.heat[i] - dt * 40);
     }
     if (!validZone) this.comfort = Math.min(100, this.comfort + dt * 4);
