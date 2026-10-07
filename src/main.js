@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import './style.css';
+import { PurchaseQuiz } from './math.js';
 import { createCharacter, HAIR_COLORS, SKIN_COLORS, OUTFIT_COLORS } from './character.js';
 import { Economy, DENOMINATIONS, formatMoney } from './economy.js';
 import { createPuppy, createCareRoom } from './visuals.js';
@@ -49,9 +50,12 @@ const coinItems = [];
 let care = new CareSession();
 let activeZone = null;
 const zoneNames = ['head', 'back', 'frontPaws', 'backPaws'];
+Object.assign(texts.tr,{mathTitle:'Şapka alışverişi',conversionQuestion:'Şapkanın fiyatı kaç Rappen?',remainingQuestion:'Şapkayı alınca kaç Rappen kalır?',checkAnswer:'Kontrol et',nextQuestion:'Sonraki soru',buyHat:'Şapkayı satın al',cancelMath:'Vazgeç',mathCorrect:'Doğru! Harika hesapladın.',mathRetry:'Bir daha deneyelim. Para kesilmedi.',priceLabel:'Fiyat',balanceLabel:'Cüzdan',conversionHint:'Frank sayısını 100 ile çarp, Rappen miktarını ekle.',remainingHint:'Cüzdandaki Rappen miktarından şapkanın fiyatını çıkar.',answerLabel:'Cevabın (Rappen)'});
+Object.assign(texts.en,{mathTitle:'Hat shopping',conversionQuestion:'How many Rappen does the hat cost?',remainingQuestion:'How many Rappen will you have left?',checkAnswer:'Check',nextQuestion:'Next question',buyHat:'Buy the hat',cancelMath:'Cancel',mathCorrect:'Correct! Great calculation.',mathRetry:'Try again. No money was spent.',priceLabel:'Price',balanceLabel:'Wallet',conversionHint:'Multiply the francs by 100, then add the Rappen.',remainingHint:'Subtract the hat price from the Rappen in your wallet.',answerLabel:'Your answer (Rappen)'});
+Object.assign(texts.de,{mathTitle:'Einen Hut kaufen',conversionQuestion:'Wie viele Rappen kostet der Hut?',remainingQuestion:'Wie viele Rappen bleiben übrig?',checkAnswer:'Prüfen',nextQuestion:'Nächste Frage',buyHat:'Hut kaufen',cancelMath:'Abbrechen',mathCorrect:'Richtig! Toll gerechnet.',mathRetry:'Versuche es noch einmal. Kein Geld wurde ausgegeben.',priceLabel:'Preis',balanceLabel:'Geldbeutel',conversionHint:'Multipliziere die Franken mit 100 und addiere die Rappen.',remainingHint:'Ziehe den Hutpreis von den Rappen in deinem Geldbeutel ab.',answerLabel:'Deine Antwort (Rappen)'});
 const t=k=>texts[lang][k];
 const app=document.querySelector('#app');
-app.innerHTML=`<canvas id="world"></canvas><header><strong>🐾 World Pet Wash <small>PROTOTYPE · 05</small></strong><div><div id="wallet"></div><select id="language" aria-label="Language"><option value="tr">Türkçe</option><option value="en">English</option><option value="de">Deutsch</option></select><button id="pause">Ⅱ</button></div></header><div id="panel"></div><div id="hud"></div><div id="controls"><div id="pad"><button data-dir="up">▲</button><div><button data-dir="left">◀</button><button data-dir="down">▼</button><button data-dir="right">▶</button></div></div><button id="action"></button></div><div id="toast" role="status"></div><div id="bubble-layer"></div><div id="dryer-layer"></div><div id="wardrobe"></div><div id="shop"></div><footer>World Pet Wash · browser prototype</footer>`;
+app.innerHTML=`<canvas id="world"></canvas><header><strong>🐾 World Pet Wash <small>PROTOTYPE · 06</small></strong><div><div id="wallet"></div><select id="language" aria-label="Language"><option value="tr">Türkçe</option><option value="en">English</option><option value="de">Deutsch</option></select><button id="pause">Ⅱ</button></div></header><div id="panel"></div><div id="hud"></div><div id="controls"><div id="pad"><button data-dir="up">▲</button><div><button data-dir="left">◀</button><button data-dir="down">▼</button><button data-dir="right">▶</button></div></div><button id="action"></button></div><div id="toast" role="status"></div><div id="bubble-layer"></div><div id="dryer-layer"></div><div id="wardrobe"></div><div id="shop"></div><footer>World Pet Wash · browser prototype</footer>`;
 const canvas=document.querySelector('#world'),panel=document.querySelector('#panel'),hud=document.querySelector('#hud'),action=document.querySelector('#action'),layer=document.querySelector('#bubble-layer');
 const renderer=new THREE.WebGLRenderer({canvas,antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;renderer.setClearColor('#b8e5ec');
 const scene=new THREE.Scene();scene.fog=new THREE.Fog('#b8e5ec',35,75);const camera=new THREE.PerspectiveCamera(48,innerWidth/innerHeight,.1,150);
@@ -246,19 +250,50 @@ function renderWardrobe() {
     if (paused || stage !== 'dress') return;
     const category=button.dataset.category,color=button.dataset.color;
     if(care.outfit[category]===color)return;
-    if(!payFor(category))return;
-    const response = care.choose(category,color);
-    if (response === 'escape') { escapeCare(); return; }
-    if (response === 'dislike') {
-      misses++;
-      toast(t('disliked'));
-      dog.rotation.z = .12;
-    } else { toast(t('liked')); dog.rotation.z = 0; }
-    showOutfit(); renderWardrobe(); updateCareHud();
+    if(category==='hat') {
+      if(!economy.canPay('hat')){toast(t('insufficient'));return;}
+      openHatQuiz(color);return;
+    }
+    purchaseOutfit(category,color);
   };
   document.querySelector('#finish-care').onclick = () => {
     if (!care.dressed || paused) return;
     stage = 'done'; dog.rotation.z = 0; toast(''); renderUI();
+  };
+}
+function purchaseOutfit(category,color) {
+  if(!payFor(category))return;
+  const response=care.choose(category,color);
+  if(response==='escape'){escapeCare();return;}
+  if(response==='dislike'){misses++;toast(t('disliked'));dog.rotation.z=.12;}
+  else{toast(t('liked'));dog.rotation.z=0;}
+  showOutfit();renderWardrobe();updateCareHud();
+}
+const mathDialog=document.createElement('dialog');
+mathDialog.id='math-dialog';mathDialog.setAttribute('aria-labelledby','math-title');
+document.body.append(mathDialog);
+let hatQuiz=null;
+function closeHatQuiz(){mathDialog.close();hatQuiz=null;keys.clear();}
+mathDialog.addEventListener('cancel',e=>{e.preventDefault();closeHatQuiz();});
+function openHatQuiz(color){
+  keys.clear();hatQuiz={quiz:new PurchaseQuiz(economy.balance,economy.prices.hat),color};
+  renderHatQuiz();mathDialog.showModal();mathDialog.querySelector('input').focus();
+}
+function renderHatQuiz(){
+  const q=hatQuiz.quiz,conversion=q.step===0;
+  mathDialog.innerHTML=`<h2 id="math-title">${t('mathTitle')}</h2><p>${q.step+1} / 2 · ${t(conversion?'conversionQuestion':'remainingQuestion')}</p><p>${t('priceLabel')}: <strong>${money(q.price)}</strong><br>${t('balanceLabel')}: <strong>${money(q.balance)}</strong></p><form id="math-form"><label>${t('answerLabel')}<input id="math-answer" type="text" inputmode="numeric" pattern="[0-9]+" autocomplete="off" required></label><button class="primary">${t('checkAnswer')}</button></form><p id="math-feedback" role="status"></p><button id="math-next" class="primary" hidden>${t(conversion?'nextQuestion':'buyHat')}</button><button id="math-cancel">${t('cancelMath')}</button>`;
+  mathDialog.querySelector('#math-cancel').onclick=closeHatQuiz;
+  mathDialog.querySelector('form').onsubmit=e=>{
+    e.preventDefault();const correct=q.check(mathDialog.querySelector('input').value);
+    mathDialog.querySelector('#math-feedback').textContent=correct?t('mathCorrect'):`${t('mathRetry')} ${t(conversion?'conversionHint':'remainingHint')} ${conversion?`${Math.floor(q.price/100)} × 100 + ${q.price%100}`:`${q.balance} − ${q.price}`}`;
+    if(correct){mathDialog.querySelector('#math-form').hidden=true;mathDialog.querySelector('#math-next').hidden=false;mathDialog.querySelector('#math-next').focus();}
+    else mathDialog.querySelector('input').select();
+  };
+  mathDialog.querySelector('#math-next').onclick=()=>{
+    if(!q.advance())return;
+    if(!q.complete){renderHatQuiz();mathDialog.querySelector('input').focus();return;}
+    const color=hatQuiz.color;closeHatQuiz();
+    if(stage==='dress'&&!paused)purchaseOutfit('hat',color);
   };
 }
 function updateCareHud() {
@@ -288,7 +323,7 @@ function enterCare() {
   if (stage === 'wash') for (let i = 0; i < 5; i++) addBubble();
 }
 function resize(){renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();}addEventListener('resize',resize);resize();
-const keys=new Set();addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();if(e.target.matches('input,select'))return;keys.add(e.key.toLowerCase());if(e.code==='Space'&&!e.repeat)act();});addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));addEventListener('blur',()=>{keys.clear();stopDryer();if(stage!=='create'&&stage!=='done'){paused=true;renderUI();}});
+const keys=new Set();addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();if(mathDialog.open||e.target.matches('input,select'))return;keys.add(e.key.toLowerCase());if(e.code==='Space'&&!e.repeat)act();});addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));addEventListener('blur',()=>{keys.clear();stopDryer();if(stage!=='create'&&stage!=='done'){if(hatQuiz)closeHatQuiz();paused=true;renderUI();}});
 for(const btn of document.querySelectorAll('[data-dir]')){btn.addEventListener('pointerdown',e=>{btn.setPointerCapture(e.pointerId);keys.add(btn.dataset.dir);});for(const ev of ['pointerup','pointercancel','lostpointercapture'])btn.addEventListener(ev,()=>keys.delete(btn.dataset.dir));}
 function toast(message){const el=document.querySelector('#toast');el.textContent=message;clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.textContent='',4500);}
 let best=0;try{best=Number(localStorage.getItem('wpw-best'))||0;}catch{}

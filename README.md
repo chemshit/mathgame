@@ -32,3 +32,5 @@ Bu sürümde hesap sorusu ve gerçek para/ödeme yoktur; toplama, fiyatları gö
 Kız ve erkek farklı başlangıç saçları ve kıyafet detaylarıyla gelir. Dört saç modeli (kısa, omuz hizası, at kuyruğu, kıvırcık), beş saç rengi, dört ten rengi, dört kıyafet rengi ve spor şapka/güneş şapkası/bere seçenekleri her iki karakter için de kullanılabilir. “Karakteri döndür” ile görünümü inceleyebilirsiniz. Seçimler ve isim dil değiştirirken korunur; koşarken kol ve bacaklar hareket eder. Modeller `src/character.js` içinde özgün olarak üretilir.
 
 ![Karakter seçimi](docs/character.png)
+
+Şapka alışverişinde iki matematik sorusu vardır: fiyatı Frank/Rappen'den Rappen'e dönüştürme ve satın alma sonrası kalan Rappen'i hesaplama. İki doğru cevaptan sonra satın alma düğmesi açılır. Yanlış cevapta ipucu gösterilir; para kesilmez, köpeğin rahatlığı etkilenmez. Vazgeçme ve Escape ücretsizdir. Sorular Türkçe, İngilizce ve Almanca destekler. Diğer bakım alışverişleri mevcut şekilde devam eder.
