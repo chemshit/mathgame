@@ -7,10 +7,11 @@ export class PurchaseQuiz {
     this.correct = false;
   }
   get complete() { return this.step === 2; }
-  check(answer) {
+  check(francs, rappen) {
     if (this.complete) return false;
-    this.correct = /^\d+$/.test(answer) && Number(answer) ===
-      (this.step === 0 ? this.price : this.balance - this.price);
+    const expected = this.step === 0 ? this.price : this.balance - this.price;
+    this.correct = /^\d+$/.test(francs) && /^\d+$/.test(rappen) &&
+      Number(francs) === Math.floor(expected / 100) && Number(rappen) === expected % 100;
     return this.correct;
   }
   advance() {

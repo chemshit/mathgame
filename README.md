@@ -33,4 +33,4 @@ Kız ve erkek farklı başlangıç saçları ve kıyafet detaylarıyla gelir. D�
 
 ![Karakter seçimi](docs/character.png)
 
-Şapka alışverişinde iki matematik sorusu vardır: fiyatı Frank/Rappen'den Rappen'e dönüştürme ve satın alma sonrası kalan Rappen'i hesaplama. İki doğru cevaptan sonra satın alma düğmesi açılır. Yanlış cevapta ipucu gösterilir; para kesilmez, köpeğin rahatlığı etkilenmez. Vazgeçme ve Escape ücretsizdir. Sorular Türkçe, İngilizce ve Almanca destekler. Diğer bakım alışverişleri mevcut şekilde devam eder.
+Şapka alışverişinde iki matematik sorusu vardır: Rappen olarak verilen fiyatı Frank ve Rappen'e dönüştürme ve satın alma sonrası kalan parayı hesaplama. Cevaplar yan yana Frank ve Rappen kutularına yazılır (örneğin 10 Frank ve 70 Rappen); Rappen kutusu 0–99 arasında olmalıdır. Bir birim yoksa 0 yazılır. İki doğru cevaptan sonra satın alma düğmesi açılır. Yanlış cevapta ipucu gösterilir; para kesilmez, köpeğin rahatlığı etkilenmez. Vazgeçme ve Escape ücretsizdir. Sorular Türkçe, İngilizce ve Almanca destekler. Diğer bakım alışverişleri mevcut şekilde devam eder.
