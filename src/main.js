@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import './style.css';
+import { CaptureSequence } from './capture.js';
 import { MoneyQuestion, collectionQuestion } from './math.js';
 import { createCharacter, HAIR_COLORS, SKIN_COLORS, OUTFIT_COLORS } from './character.js';
 import { Economy, DENOMINATIONS, formatMoney } from './economy.js';
@@ -59,6 +60,9 @@ Object.assign(texts.de,{mathTitle:'Einkauf berechnen',remainingQuestion:'Wie vie
 Object.assign(texts.tr,{bubblePrice:'Baloncuk fiyatı',bubbleRange:'Baloncuklar: 30–80 Rappen · Her 2. baloncukta soru'});
 Object.assign(texts.en,{bubblePrice:'Bubble price',bubbleRange:'Bubbles: 30–80 Rappen · A question every 2nd bubble'});
 Object.assign(texts.de,{bubblePrice:'Seifenblasenpreis',bubbleRange:'Seifenblasen: 30–80 Rappen · Eine Frage bei jeder 2. Blase'});
+Object.assign(texts.tr,{timing:'Zıpla ve yakala!',timingHelp:'Havada hedef yeşilken köpeğin üzerindeki halkaya tıkla veya dokun.',caughtPet:'Yakaladın! Bakım odasına gidiyoruz.',missedPet:'Köpek kaçtı! Yeniden yaklaş.',tap:'Yakala'});
+Object.assign(texts.en,{timing:'Jump and catch!',timingHelp:'While in the air, click or tap the ring on the puppy when it turns green.',caughtPet:'Caught! Heading to the care room.',missedPet:'The puppy got away! Get close again.',tap:'Catch'});
+Object.assign(texts.de,{timing:'Spring und fang!',timingHelp:'Klicke oder tippe in der Luft auf den Ring am Hund, wenn er grün wird.',caughtPet:'Gefangen! Auf zum Pflegeraum.',missedPet:'Der Hund ist entwischt! Geh wieder näher.',tap:'Fangen'});
 const t=k=>texts[lang][k];
 const app=document.querySelector('#app');
 app.innerHTML=`<canvas id="world"></canvas><header><strong>🐾 World Pet Wash <small>PROTOTYPE · 06</small></strong><div><div id="wallet"></div><select id="language" aria-label="Language"><option value="tr">Türkçe</option><option value="en">English</option><option value="de">Deutsch</option></select><button id="pause">Ⅱ</button></div></header><div id="panel"></div><div id="hud"></div><div id="controls"><div id="pad"><button data-dir="up">▲</button><div><button data-dir="left">◀</button><button data-dir="down">▼</button><button data-dir="right">▶</button></div></div><button id="action"></button></div><div id="toast" role="status"></div><div id="bubble-layer"></div><div id="dryer-layer"></div><div id="wardrobe"></div><div id="shop"></div><footer>World Pet Wash · browser prototype</footer>`;
@@ -70,8 +74,8 @@ const mat=c=>new THREE.MeshStandardMaterial({color:c,roughness:.8});
 function mesh(geo,color,parent,x=0,y=0,z=0){const m=new THREE.Mesh(geo,mat(color));m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m;}
 const sphere=(r,c,p,x,y,z)=>mesh(new THREE.SphereGeometry(r,16,12),c,p,x,y,z);
 const box=(w,h,d,c,p,x,y,z)=>mesh(new THREE.BoxGeometry(w,h,d),c,p,x,y,z);
-const park=new THREE.Group();scene.add(park);mesh(new THREE.CylinderGeometry(40,40,1,64),'#9ecb72',park,0,-.55,0);mesh(new THREE.CylinderGeometry(16,16,.03,64),'#e4d3ab',park,0,.01,0);
-for(let i=0;i<30;i++){const a=i/30*Math.PI*2,r=34+(i%3);const tree=new THREE.Group();tree.position.set(Math.sin(a)*r,0,Math.cos(a)*r);park.add(tree);mesh(new THREE.CylinderGeometry(.18,.3,2.5,8),'#99775b',tree,0,1.25,0);sphere(1.8,i%2?'#5d9e68':'#73b57b',tree,0,3.3,0);}
+const park=new THREE.Group();scene.add(park);mesh(new THREE.CylinderGeometry(54,54,1,64),'#9ecb72',park,0,-.55,0);mesh(new THREE.CylinderGeometry(16,16,.03,64),'#e4d3ab',park,0,.01,0);
+for(let i=0;i<30;i++){const a=i/30*Math.PI*2,r=48+(i%3);const tree=new THREE.Group();tree.position.set(Math.sin(a)*r,0,Math.cos(a)*r);park.add(tree);mesh(new THREE.CylinderGeometry(.18,.3,2.5,8),'#99775b',tree,0,1.25,0);sphere(1.8,i%2?'#5d9e68':'#73b57b',tree,0,3.3,0);}
 for(let i=0;i<45;i++){const a=i*2.4,r=17+(i%15);sphere(.12,['#fff5ce','#f79caf','#b49de2'][i%3],park,Math.sin(a)*r,.12,Math.cos(a)*r);}
 box(6,4,4,'#f5e6d2',park,-13,2,-10);mesh(new THREE.ConeGeometry(5,2,4),'#dd8971',park,-13,5,-10).rotation.y=Math.PI/4;box(1.4,2.3,.1,'#79b8c1',park,-13,1.15,-7.95);
 const coinLayer = new THREE.Group();park.add(coinLayer);
@@ -97,7 +101,7 @@ function spawnCoins(reset=false) {
     const label=new THREE.Mesh(new THREE.PlaneGeometry(.55,.55),coinLabels.get(value));label.position.z=.045;group.add(label);
     const backLabel=new THREE.Mesh(label.geometry,coinLabels.get(value));backLabel.rotation.y=Math.PI;backLabel.position.z=-.045;group.add(backLabel);
     if(i<12)group.position.set(i%2===0?0:2, .65, 1.5+i*1.6);
-    else {const angle=i*2.4,radius=10+(i%6)*4;group.position.set(Math.sin(angle)*radius,.65,Math.cos(angle)*radius);}
+    else {const angle=i*2.4,radius=12+(i%6)*6;group.position.set(Math.sin(angle)*radius,.65,Math.cos(angle)*radius);}
     coinItems.push({id:`${coinBatch}:${i}`,value,group});
   }
   coinBatch++;
@@ -284,7 +288,7 @@ const mathDialog=document.createElement('dialog');
 mathDialog.id='math-dialog';mathDialog.setAttribute('aria-labelledby','math-title');
 document.body.append(mathDialog);
 let mathTask=null;
-function closeMath(){mathDialog.close();mathTask=null;keys.clear();}
+function closeMath(){mathDialog.classList.remove('answer-success','answer-error');mathDialog.close();mathTask=null;keys.clear();}
 mathDialog.addEventListener('cancel',e=>{e.preventDefault();closeMath();});
 function askPurchase(item,finish){
   if(!economy.canPay(item)){toast(t('insufficient'));return;}
@@ -297,14 +301,21 @@ function openMath(question,item,finish){
 function renderMath(){
   const {question:q,item}=mathTask,isPark=item==='park';
   const francUnit=lang==='de'?'Franken':lang==='en'?'Francs':'Frank';
-  mathDialog.innerHTML=`<h2 id="math-title">${t(isPark?'parkMath':'mathTitle')}</h2><p>${t(isPark?'additionQuestion':'remainingQuestion')}</p><p>${isPark?`${money(q.left)} + ${money(q.right)}`:`${t(item==='bubble'?'bubblePrice':item==='dryer'?'dryerPrice':item)}: <strong>${money(q.right)}</strong><br>${t('balanceLabel')}: <strong>${money(q.left)}</strong>`}</p><form id="math-form"><fieldset class="money-answer"><legend>${t('answerLabel')}</legend><label>${francUnit}<input id="math-francs" type="text" inputmode="numeric" pattern="[0-9]+" autocomplete="off" required></label><label>Rappen<input id="math-rappen" type="text" inputmode="numeric" pattern="[0-9]+" autocomplete="off" required></label></fieldset><button class="primary">${t('checkAnswer')}</button></form><p id="math-feedback" role="status"></p><button id="math-cancel">${t('cancelMath')}</button>`;
+  mathDialog.innerHTML=`<h2 id="math-title">${t(isPark?'parkMath':'mathTitle')}</h2><p>${t(isPark?'additionQuestion':'remainingQuestion')}</p><div>${isPark?`${money(q.left)} + ${money(q.right)}`:`<div class="math-money wallet-row"><span>${t('balanceLabel')}</span><strong>${money(q.left)}</strong></div><div class="math-money price-row"><span>${t(item==='bubble'?'bubblePrice':item==='dryer'?'dryerPrice':item)}</span><strong>${money(q.right)}</strong></div>`}</div><form id="math-form"><fieldset class="money-answer"><legend>${t('answerLabel')}</legend><label>${francUnit}<input id="math-francs" type="text" inputmode="numeric" pattern="[0-9]+" autocomplete="off" required></label><label>Rappen<input id="math-rappen" type="text" inputmode="numeric" pattern="[0-9]+" autocomplete="off" required></label></fieldset><button class="primary">${t('checkAnswer')}</button></form><p id="math-feedback" role="status"></p><button id="math-cancel">${t('cancelMath')}</button>`;
   mathDialog.querySelector('#math-cancel').onclick=closeMath;
   mathDialog.querySelector('form').onsubmit=e=>{
-    e.preventDefault();const correct=q.check(mathDialog.querySelector('#math-francs').value,mathDialog.querySelector('#math-rappen').value);
+    e.preventDefault();if(mathTask?.settling)return;const correct=q.check(mathDialog.querySelector('#math-francs').value,mathDialog.querySelector('#math-rappen').value);
     if(correct){
-      const task=mathTask;closeMath();
-      if(stage===task.stage&&!paused){task.finish();toast(t('mathCorrect'));}
+      mathDialog.classList.remove('answer-error');
+      const task=mathTask;
+      if(task.settling)return;task.settling=true;
+      mathDialog.classList.add('answer-success');
+      mathDialog.querySelector('#math-feedback').textContent='✓ '+t('mathCorrect');
+      mathDialog.querySelector('button.primary').disabled=true;
+      for(const input of mathDialog.querySelectorAll('input'))input.disabled=true;
+      setTimeout(()=>{if(mathTask!==task)return;closeMath();if(stage===task.stage&&!paused){toast(t('mathCorrect'));task.finish();}},550);
     }else{
+      mathDialog.classList.remove('answer-error');void mathDialog.offsetWidth;mathDialog.classList.add('answer-error');
       mathDialog.querySelector('#math-feedback').textContent=`${t('mathRetry')} ${t(isPark?'additionHint':'remainingHint')} ${money(q.left)} ${isPark?'+':'−'} ${money(q.right)}`;
       mathDialog.querySelector('input').select();
     }
@@ -341,11 +352,11 @@ const keys=new Set();addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','A
 for(const btn of document.querySelectorAll('[data-dir]')){btn.addEventListener('pointerdown',e=>{btn.setPointerCapture(e.pointerId);keys.add(btn.dataset.dir);});for(const ev of ['pointerup','pointercancel','lostpointercapture'])btn.addEventListener(ev,()=>keys.delete(btn.dataset.dir));}
 function toast(message){const el=document.querySelector('#toast');el.textContent=message;clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.textContent='',4500);}
 let best=0;try{best=Number(localStorage.getItem('wpw-best'))||0;}catch{}
-function renderUI(){document.documentElement.lang=lang;dog.visible=stage!=='create';coinLayer.visible=['chase','timing','collect'].includes(stage);renderWallet();renderShop();document.querySelector('#pause').textContent=paused?t('resume'):t('pause');document.querySelector('#pause').hidden=stage==='create'||stage==='done';document.querySelector('#controls').style.display=(stage==='chase'||stage==='timing'||stage==='collect')&&!paused?'flex':'none';layer.hidden=stage!=='wash'||paused;dryerLayer.hidden=stage!=='dry'||paused;wardrobe.hidden=stage!=='dress'||paused;document.body.dataset.stage=stage;document.body.classList.toggle('is-paused',paused);if(paused)stopDryer();
+function renderUI(){document.documentElement.lang=lang;dog.visible=stage!=='create';coinLayer.visible=['chase','timing','collect'].includes(stage);renderWallet();renderShop();document.querySelector('#pause').textContent=paused?t('resume'):t('pause');document.querySelector('#pause').hidden=stage==='create'||stage==='done';document.querySelector('#controls').style.display=(stage==='chase'||stage==='collect')&&!paused?'flex':'none';layer.hidden=stage!=='wash'||paused;dryerLayer.hidden=stage!=='dry'||paused;wardrobe.hidden=stage!=='dress'||paused;document.body.dataset.stage=stage;document.body.classList.toggle('is-paused',paused);if(paused)stopDryer();
 if(stage==='create'){renderCharacterEditor();return;}
 if(paused){panel.className='card centered';panel.innerHTML=`<h1>${t('paused')}</h1><button class="primary" id="resume">${t('resume')}</button>`;document.querySelector('#resume').onclick=()=>{paused=false;renderUI();};return;}
 if(stage==='done'){const stars=Math.max(1,3-Math.min(2,misses));best=Math.max(best,stars);try{localStorage.setItem('wpw-best',String(best));}catch{}panel.className='card centered';panel.innerHTML=`<div class="stars">${'★'.repeat(stars)}${'☆'.repeat(3-stars)}</div><h1>${t('done')}</h1><p>${t('doneHelp')}</p><p>${t('saved')}: ${'★'.repeat(best)}</p><p>${t('spent')}: ${money(economy.spent)}</p><button class="primary" id="again">${t('again')}</button>`;document.querySelector('#again').onclick=()=>{stage='create';park.visible=true;clinic.visible=false;player.visible=true;dog.position.set(2,0,0);dog.rotation.set(0,0,0);player.position.set(0,0,0);previewAngle=.25;care=new CareSession();showOutfit();for(const d of dirt)d.visible=true;for(const drop of wetSpots)drop.visible=false;renderUI();};hud.innerHTML='';return;}
-panel.className='instructions';panel.innerHTML=`<h2>${t(stage)}</h2><p>${t(stage+'Help')}</p>${stage==='timing'?'<div class="timing-track"><div class="target"></div><i id="marker"></i></div>':''}`;action.textContent=t(stage==='collect'?'returnCare':stage==='timing'?'tap':'catch');if(stage==='collect')action.disabled=false;const isCare = ['wash','dry','dress'].includes(stage);
+panel.className='instructions';panel.innerHTML=`<h2>${t(stage)}</h2><p>${t(stage+'Help')}</p>`;action.textContent=t(stage==='collect'?'returnCare':stage==='timing'?'tap':'catch');if(stage==='collect')action.disabled=false;const isCare = ['wash','dry','dress'].includes(stage);
   const label = stage === 'wash' ? 'clean' : stage === 'dry' ? 'dryProgress' : 'outfitProgress';
   hud.innerHTML = isCare ? `<div>${t(label)} <progress id="care-progress" max="100" value="0" aria-label="${t(label)}"></progress></div><div>${t('patience')} <progress id="comfort" max="100" value="${care.comfort}" aria-label="${t('patience')}"></progress></div>` : '';
   if(stage==='dry') renderDryer();
@@ -355,7 +366,43 @@ panel.className='instructions';panel.innerHTML=`<h2>${t(stage)}</h2><p>${t(stage
 
 function setParkView(){camera.position.set(0,4,-6);camera.lookAt(0,1,3);}
 function enterChase(){stage='chase';paused=false;park.visible=true;clinic.visible=false;player.visible=true;player.position.set(0,0,0);dog.position.set(0,0,5);angle=0;player.rotation.y=0;setParkView();for(const d of dirt)d.visible=care.phase==='wash';for(const drop of wetSpots)drop.visible=false;dog.rotation.z=0;showOutfit();stopDryer();clearBubbles();renderUI();}
-function act(){if(paused)return;if(stage==='collect'){keys.clear();enterCare();return;}if(stage==='chase'){if(player.position.distanceTo(dog.position)<3){stage='timing';marker=0;renderUI();}else toast(t('near'));}else if(stage==='timing'){if(marker>=.38&&marker<=.62)enterCare();else{misses++;stage='chase';dog.position.add(new THREE.Vector3(2,0,2));toast(t('near'));renderUI();}}}
+let capture=null,jumpStart=new THREE.Vector3(),jumpEnd=new THREE.Vector3();
+const catchTarget=document.createElement('button');catchTarget.id='catch-target';catchTarget.hidden=true;catchTarget.textContent='◎';catchTarget.setAttribute('aria-label',t('catch'));document.body.append(catchTarget);
+catchTarget.onclick=()=>{if(paused||!capture)return;capture.click(true);};
+renderer.domElement.addEventListener('pointerdown',()=>{if(!paused&&capture)capture.click(false);});
+function startCapture(){
+  keys.clear();capture=new CaptureSequence();jumpStart.copy(player.position);jumpEnd.copy(dog.position);
+  const direction=dog.position.clone().sub(player.position);angle=Math.atan2(direction.x,direction.z);player.rotation.y=angle;
+  stage='timing';renderUI();
+}
+function updateCapture(dt){
+  capture.tick(dt);const phase=capture.phase;
+  owner.animate(elapsed,false,phase==='caught'?'hold':'jump');
+  if(phase==='jump'){const p=Math.min(1,capture.time/.45);player.position.lerpVectors(jumpStart,jumpEnd,p*.65);player.position.y=Math.sin(p*Math.PI/2)*1.1;}
+  if(phase==='aim')player.position.y=1.1;
+  if(phase==='miss'){
+    player.position.y=1.1*Math.max(0,1-capture.time/.4);
+    const flee=dog.position.clone().sub(jumpStart);flee.y=0;if(flee.length()<.1)flee.set(1,0,1);
+    dog.position.addScaledVector(flee.normalize(),dt*9);if(dog.position.length()>48)dog.position.setLength(48);dog.rotation.y=Math.atan2(flee.x,flee.z);
+  }
+  if(phase==='caught'){
+    player.position.y=Math.max(0,1.1-capture.time*3);
+    dog.scale.setScalar(.55);dog.position.copy(player.position).add(new THREE.Vector3(Math.sin(angle)*.5,.8,Math.cos(angle)*.5));dog.rotation.y=angle+Math.PI/2;
+    if(!document.body.classList.contains('catch-success')){document.body.classList.add('catch-success');toast(t('caughtPet'));}
+  }
+  if(phase==='retry'){misses++;player.position.y=0;capture=null;stage='chase';toast(t('missedPet'));renderUI();}
+  if(phase==='inside'){capture=null;player.position.y=0;dog.scale.setScalar(1);document.body.classList.remove('catch-success');enterCare();document.body.classList.add('enter-room');setTimeout(()=>document.body.classList.remove('enter-room'),600);}
+}
+function positionCatchTarget(){
+  catchTarget.hidden=paused||stage!=='timing'||capture?.phase!=='aim';if(catchTarget.hidden)return;
+  const v=dog.position.clone().add(new THREE.Vector3(0,1,0)).project(camera);
+  catchTarget.style.left=Math.max(48,Math.min(innerWidth-48,(v.x*.5+.5)*innerWidth))+'px';
+  catchTarget.style.top=Math.max(70,Math.min(innerHeight-55,(-v.y*.5+.5)*innerHeight))+'px';
+  catchTarget.classList.toggle('ready',capture.ready);catchTarget.setAttribute('aria-label',t('catch'));
+  catchTarget.style.setProperty('--ring-scale',String(1.6-capture.time/1.8*.6));
+}
+function act(){if(paused)return;if(stage==='collect'){keys.clear();enterCare();return;}if(stage==='chase'){if(player.position.distanceTo(dog.position)<3)startCapture();else toast(t('near'));}else if(stage==='timing'&&capture?.phase==='aim'){capture.click(true);}}
+
 action.onclick=act;document.querySelector('#pause').onclick=()=>{paused=!paused;keys.clear();stopDryer();renderUI();};document.querySelector('#language').onchange=e=>{lang=e.target.value;stopDryer();renderUI();for(const b of bubbles)b.el.setAttribute('aria-label',`${t('wash')} · ${money(b.price)}`);};
 function clearBubbles(){for(const b of bubbles)b.el.remove();bubbles=[];selectedBubble=null;}
 function buyBubble(b){
@@ -394,7 +441,7 @@ function addBubble(){
   });
   el.addEventListener('pointercancel',()=>{selectedBubble=null;resetPosition();});
 }
-const clock=new THREE.Clock();function loop(){requestAnimationFrame(loop);const dt=Math.min(clock.getDelta(),.05);if(!paused&&!mathTask){elapsed+=dt;dryerKnockTime=Math.max(0,dryerKnockTime-dt);if(stage==='chase'||stage==='collect'){updateCoins();const forward=(keys.has('w')||keys.has('arrowup')||keys.has('up')?1:0)-(keys.has('s')||keys.has('arrowdown')||keys.has('down')?1:0);const turn=(keys.has('a')||keys.has('arrowleft')||keys.has('left')?1:0)-(keys.has('d')||keys.has('arrowright')||keys.has('right')?1:0);angle+=turn*dt*2.2;player.rotation.y=angle;player.position.x+=Math.sin(angle)*forward*dt*5;player.position.z+=Math.cos(angle)*forward*dt*5;if(player.position.length()>37)player.position.setLength(37);owner.animate(elapsed,forward!==0);const dest=new THREE.Vector3(Math.sin(elapsed*.25)*13,0,Math.cos(elapsed*.25)*13);const dir=dest.sub(dog.position);if(dir.length()>.2){dog.position.addScaledVector(dir.normalize(),dt*2);dog.rotation.y=Math.atan2(dir.x,dir.z);}dog.position.y=Math.sin(elapsed*14)*.035;action.disabled=stage==='collect'?false:player.position.distanceTo(dog.position)>=3;}if(stage==='timing'){marker=(Math.sin(elapsed*3.5)+1)/2;document.querySelector('#marker').style.left=marker*100+'%';action.disabled=false;}if(stage==='wash'){if(bubbles.some(b=>economy.canPayAmount(b.price)))care.tickWash(dt);updateCareHud();if(care.comfort<=0)escapeCare();}
+const clock=new THREE.Clock();function loop(){requestAnimationFrame(loop);const dt=Math.min(clock.getDelta(),.05);if(!paused&&!mathTask){elapsed+=dt;dryerKnockTime=Math.max(0,dryerKnockTime-dt);if(stage==='chase'||stage==='collect'){updateCoins();const forward=(keys.has('w')||keys.has('arrowup')||keys.has('up')?1:0)-(keys.has('s')||keys.has('arrowdown')||keys.has('down')?1:0);const turn=(keys.has('a')||keys.has('arrowleft')||keys.has('left')?1:0)-(keys.has('d')||keys.has('arrowright')||keys.has('right')?1:0);angle+=turn*dt*2.2;player.rotation.y=angle;player.position.x+=Math.sin(angle)*forward*dt*5;player.position.z+=Math.cos(angle)*forward*dt*5;if(player.position.length()>51)player.position.setLength(51);owner.animate(elapsed,forward!==0);const dest=new THREE.Vector3(Math.sin(elapsed*.25)*19,0,Math.cos(elapsed*.25)*19);const dir=dest.sub(dog.position);if(dir.length()>.2){dog.position.addScaledVector(dir.normalize(),dt*2);dog.rotation.y=Math.atan2(dir.x,dir.z);}dog.position.y=Math.sin(elapsed*14)*.035;action.disabled=stage==='collect'?false:player.position.distanceTo(dog.position)>=3;}if(stage==='timing'&&capture)updateCapture(dt);if(stage==='wash'){if(bubbles.some(b=>economy.canPayAmount(b.price)))care.tickWash(dt);updateCareHud();if(care.comfort<=0)escapeCare();}
 if(stage==='dry'){
   const finished = care.dry(dt,activeZone);
   if(care.dryerRejected)knockDryer();
@@ -403,5 +450,5 @@ if(stage==='dry'){
   else updateCareHud();
 }
 }
-let target,look;if(stage==='chase'||stage==='timing'||stage==='collect'){target=player.position.clone().add(new THREE.Vector3(-Math.sin(angle)*6,4,-Math.cos(angle)*6));look=player.position.clone().add(new THREE.Vector3(Math.sin(angle)*3,1,Math.cos(angle)*3));}else if(['wash','dry','dress','done'].includes(stage)){const compact=innerHeight<600;const dressing=stage==='dress';target=new THREE.Vector3(dressing&&innerWidth>500?2:0,3.6,compact?5.8:7);look=new THREE.Vector3(dressing&&innerWidth>500?2:0,compact?2.5:1.6,0);}else{const portrait=innerWidth<600;target=new THREE.Vector3(portrait?-.8:-1.25,2.05,portrait?5.4:4.4);look=new THREE.Vector3(portrait?-.8:-1.25,1.13,0);dog.position.set(2,0,-.5);player.rotation.y=previewAngle;owner.animate(elapsed,false);}camera.position.lerp(target,1-Math.exp(-dt*6));camera.lookAt(look);if(stage==='dry')updateDryer();const wet=stage==='wash'?care.clean/100:stage==='dry'?1-care.dryness/100:0;if(!paused){puppy.animate(elapsed,{running:stage==='chase'||stage==='collect',wet,comfort:care.comfort,blowing:stage==='dry'&&activeZone!==null,knocking:dryerKnockTime>0});const airTarget=stage==='dry'&&activeZone!==null?dog.localToWorld(zonePoints[activeZone].clone()):null;careRoom.animate(elapsed,{blowing:!!airTarget,target:airTarget,knock:dryerKnockTime});}renderer.render(scene,camera);}
+let target,look;if(stage==='chase'||stage==='timing'||stage==='collect'){target=player.position.clone().add(new THREE.Vector3(-Math.sin(angle)*6,4,-Math.cos(angle)*6));look=player.position.clone().add(new THREE.Vector3(Math.sin(angle)*3,1,Math.cos(angle)*3));}else if(['wash','dry','dress','done'].includes(stage)){const compact=innerHeight<600;const dressing=stage==='dress';target=new THREE.Vector3(dressing&&innerWidth>500?2:0,3.6,compact?5.8:7);look=new THREE.Vector3(dressing&&innerWidth>500?2:0,compact?2.5:1.6,0);}else{const portrait=innerWidth<600;target=new THREE.Vector3(portrait?-.8:-1.25,2.05,portrait?5.4:4.4);look=new THREE.Vector3(portrait?-.8:-1.25,1.13,0);dog.position.set(2,0,-.5);player.rotation.y=previewAngle;owner.animate(elapsed,false);}camera.position.lerp(target,1-Math.exp(-dt*6));camera.lookAt(look);positionCatchTarget();if(stage==='dry')updateDryer();const wet=stage==='wash'?care.clean/100:stage==='dry'?1-care.dryness/100:0;if(!paused){puppy.animate(elapsed,{running:stage==='chase'||stage==='collect'||capture?.phase==='miss',wet,comfort:care.comfort,blowing:stage==='dry'&&activeZone!==null,knocking:dryerKnockTime>0});const airTarget=stage==='dry'&&activeZone!==null?dog.localToWorld(zonePoints[activeZone].clone()):null;careRoom.animate(elapsed,{blowing:!!airTarget,target:airTarget,knock:dryerKnockTime});}renderer.render(scene,camera);}
 camera.position.set(innerWidth<600?-.8:-1.25,2.05,innerWidth<600?5.4:4.4);renderUI();loop();

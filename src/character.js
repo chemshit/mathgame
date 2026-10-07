@@ -91,8 +91,9 @@ export function createCharacter() {
     girlDetails.visible=next.gender==='girl';boyDetails.visible=next.gender==='boy';
     head.scale.set(next.gender==='girl'?.97:1,1,1);
   }
-  function animate(time,running=false){
+  function animate(time,running=false,pose=null){
     for(let i=0;i<2;i++){const stride=running?Math.sin(time*11+i*Math.PI):0;legs[i].rotation.x=stride*.5;arms[i].rotation.x=-stride*.5;}
+    if(pose)for(const arm of arms)arm.rotation.x=pose==='hold'?-1.35:-2;
     rig.position.y=running?Math.abs(Math.sin(time*11))*.04:Math.sin(time*2)*.008;
     head.rotation.z=running?0:Math.sin(time*.9)*.018;
     hairGroups.ponytail.rotation.x=running?Math.sin(time*11)*.04:0;

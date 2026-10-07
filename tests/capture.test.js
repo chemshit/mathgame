@@ -1,0 +1,3 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {CaptureSequence} from '../src/capture.js';
+test('jump freezes into aim; green target catches and enters room',()=>{const s=new CaptureSequence();assert.equal(s.click(true),false);s.tick(.45);assert.equal(s.phase,'aim');s.tick(.4);assert.equal(s.ready,true);s.click(true);assert.equal(s.phase,'caught');s.tick(1.1);assert.equal(s.phase,'inside');});
+test('early click, outside click and timeout flee then allow retry',()=>{for(const mode of ['early','outside','timeout']){const s=new CaptureSequence();s.tick(.45);if(mode==='timeout')s.tick(1.8);else{s.tick(mode==='early'?.1:.5);s.click(mode==='early');}assert.equal(s.phase,'miss');s.tick(.8);assert.equal(s.phase,'retry');}});
