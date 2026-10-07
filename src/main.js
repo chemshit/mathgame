@@ -56,6 +56,9 @@ Object.assign(texts.de,{mathTitle:'Einen Hut kaufen',conversionQuestion:'Wie vie
 Object.assign(texts.tr,{mathTitle:'Alışveriş hesabı',remainingQuestion:'Bu ürünü alınca kaç Frank ve kaç Rappen kalır?',buyProduct:'Satın al',parkMath:'Parka gitmeden hesaplayalım',additionQuestion:'Bu iki miktarın toplamı kaç Frank ve kaç Rappen?',additionHint:'Frankları ve Rappenleri ayrı ayrı topla. Her 100 Rappen’i 1 Frank’a çevir.',goPark:'Parka git',dryerThrown:'Çok sıcak! Köpek fönü patisiyle itti. Fönü yeniden satın alıp baştan başla.',dryHelp:'Fönü satın al, ıslak bölgelere kısa kısa tut. Kırmızıya girer girmez fön biter ve yeniden satın alman gerekir.'});
 Object.assign(texts.en,{mathTitle:'Shopping calculation',remainingQuestion:'How many francs and Rappen remain after buying this item?',buyProduct:'Buy',parkMath:'Calculate before visiting the park',additionQuestion:'How many francs and Rappen do these amounts add up to?',additionHint:'Add francs and Rappen separately. Exchange every 100 Rappen for 1 franc.',goPark:'Go to the park',dryerThrown:'Too hot! The puppy pushed the dryer away. Buy it again and restart drying.',dryHelp:'Buy the dryer and use short bursts on wet areas. Entering red immediately ends drying; buy it again to restart.'});
 Object.assign(texts.de,{mathTitle:'Einkauf berechnen',remainingQuestion:'Wie viele Franken und Rappen bleiben nach dem Kauf übrig?',buyProduct:'Kaufen',parkMath:'Vor dem Parkbesuch rechnen',additionQuestion:'Wie viele Franken und Rappen ergeben diese Beträge zusammen?',additionHint:'Addiere Franken und Rappen getrennt. Tausche je 100 Rappen gegen 1 Franken.',goPark:'Zum Park',dryerThrown:'Zu heiss! Der Hund hat den Föhn weggestossen. Kaufe ihn erneut und beginne das Föhnen von vorne.',dryHelp:'Kaufe den Föhn und föhne nasse Stellen kurz. Sobald es rot wird, endet das Föhnen; kaufe den Föhn erneut.'});
+Object.assign(texts.tr,{bubblePrice:'Baloncuk fiyatı',bubbleRange:'Baloncuklar: 30–80 Rappen · Her 2. baloncukta soru'});
+Object.assign(texts.en,{bubblePrice:'Bubble price',bubbleRange:'Bubbles: 30–80 Rappen · A question every 2nd bubble'});
+Object.assign(texts.de,{bubblePrice:'Seifenblasenpreis',bubbleRange:'Seifenblasen: 30–80 Rappen · Eine Frage bei jeder 2. Blase'});
 const t=k=>texts[lang][k];
 const app=document.querySelector('#app');
 app.innerHTML=`<canvas id="world"></canvas><header><strong>🐾 World Pet Wash <small>PROTOTYPE · 06</small></strong><div><div id="wallet"></div><select id="language" aria-label="Language"><option value="tr">Türkçe</option><option value="en">English</option><option value="de">Deutsch</option></select><button id="pause">Ⅱ</button></div></header><div id="panel"></div><div id="hud"></div><div id="controls"><div id="pad"><button data-dir="up">▲</button><div><button data-dir="left">◀</button><button data-dir="down">▼</button><button data-dir="right">▶</button></div></div><button id="action"></button></div><div id="toast" role="status"></div><div id="bubble-layer"></div><div id="dryer-layer"></div><div id="wardrobe"></div><div id="shop"></div><footer>World Pet Wash · browser prototype</footer>`;
@@ -185,7 +188,7 @@ function payFor(item){if(!economy.pay(item)){toast(t('insufficient'));return fal
 function renderShop(){
   shop.hidden=paused||!['wash','dry','dress'].includes(stage);
   if(shop.hidden)return;
-  const price=stage==='wash'?`${t('bubblePrice')}: ${money(economy.prices.bubble)}`:stage==='dry'?`${t('dryerPrice')}: ${money(economy.prices.dryer)}`:t('outfitPrice');
+  const price=stage==='wash'?t('bubbleRange'):stage==='dry'?`${t('dryerPrice')}: ${money(economy.prices.dryer)}`:t('outfitPrice');
   shop.innerHTML=`<strong>${price}</strong>${stage==='dry'?`<button id="buy-dryer" ${economy.dryerPaid?'disabled':''}>${economy.dryerPaid?t('paid'):t('unlock')}</button>`:''}<button id="collect-more">${t('moreCoins')}</button>`;
   document.querySelector('#collect-more').onclick=()=>openMath(collectionQuestion(), 'park', enterCollection);
   const buy=document.querySelector('#buy-dryer');if(buy)buy.onclick=()=>{
@@ -294,18 +297,17 @@ function openMath(question,item,finish){
 function renderMath(){
   const {question:q,item}=mathTask,isPark=item==='park';
   const francUnit=lang==='de'?'Franken':lang==='en'?'Francs':'Frank';
-  mathDialog.innerHTML=`<h2 id="math-title">${t(isPark?'parkMath':'mathTitle')}</h2><p>${t(isPark?'additionQuestion':'remainingQuestion')}</p><p>${isPark?`${money(q.left)} + ${money(q.right)}`:`${t(item==='bubble'?'bubblePrice':item==='dryer'?'dryerPrice':item)}: <strong>${money(q.right)}</strong><br>${t('balanceLabel')}: <strong>${money(q.left)}</strong>`}</p><form id="math-form"><fieldset class="money-answer"><legend>${t('answerLabel')}</legend><label>${francUnit}<input id="math-francs" type="text" inputmode="numeric" pattern="[0-9]+" autocomplete="off" required></label><label>Rappen<input id="math-rappen" type="text" inputmode="numeric" pattern="[0-9]+" autocomplete="off" required></label></fieldset><button class="primary">${t('checkAnswer')}</button></form><p id="math-feedback" role="status"></p><button id="math-next" class="primary" hidden>${t(isPark?'goPark':'buyProduct')}</button><button id="math-cancel">${t('cancelMath')}</button>`;
+  mathDialog.innerHTML=`<h2 id="math-title">${t(isPark?'parkMath':'mathTitle')}</h2><p>${t(isPark?'additionQuestion':'remainingQuestion')}</p><p>${isPark?`${money(q.left)} + ${money(q.right)}`:`${t(item==='bubble'?'bubblePrice':item==='dryer'?'dryerPrice':item)}: <strong>${money(q.right)}</strong><br>${t('balanceLabel')}: <strong>${money(q.left)}</strong>`}</p><form id="math-form"><fieldset class="money-answer"><legend>${t('answerLabel')}</legend><label>${francUnit}<input id="math-francs" type="text" inputmode="numeric" pattern="[0-9]+" autocomplete="off" required></label><label>Rappen<input id="math-rappen" type="text" inputmode="numeric" pattern="[0-9]+" autocomplete="off" required></label></fieldset><button class="primary">${t('checkAnswer')}</button></form><p id="math-feedback" role="status"></p><button id="math-cancel">${t('cancelMath')}</button>`;
   mathDialog.querySelector('#math-cancel').onclick=closeMath;
   mathDialog.querySelector('form').onsubmit=e=>{
     e.preventDefault();const correct=q.check(mathDialog.querySelector('#math-francs').value,mathDialog.querySelector('#math-rappen').value);
-    mathDialog.querySelector('#math-feedback').textContent=correct?t('mathCorrect'):`${t('mathRetry')} ${t(isPark?'additionHint':'remainingHint')} ${money(q.left)} ${isPark?'+':'−'} ${money(q.right)}`;
-    if(correct){mathDialog.querySelector('#math-form').hidden=true;mathDialog.querySelector('#math-next').hidden=false;mathDialog.querySelector('#math-next').focus();}
-    else mathDialog.querySelector('input').select();
-  };
-  mathDialog.querySelector('#math-next').onclick=()=>{
-    const task=mathTask;
-    if(!task.question.check(mathDialog.querySelector('#math-francs').value,mathDialog.querySelector('#math-rappen').value))return;
-    closeMath();if(stage===task.stage&&!paused)task.finish();
+    if(correct){
+      const task=mathTask;closeMath();
+      if(stage===task.stage&&!paused){task.finish();toast(t('mathCorrect'));}
+    }else{
+      mathDialog.querySelector('#math-feedback').textContent=`${t('mathRetry')} ${t(isPark?'additionHint':'remainingHint')} ${money(q.left)} ${isPark?'+':'−'} ${money(q.right)}`;
+      mathDialog.querySelector('input').select();
+    }
   };
 }
 function updateCareHud() {
@@ -354,14 +356,45 @@ panel.className='instructions';panel.innerHTML=`<h2>${t(stage)}</h2><p>${t(stage
 function setParkView(){camera.position.set(0,4,-6);camera.lookAt(0,1,3);}
 function enterChase(){stage='chase';paused=false;park.visible=true;clinic.visible=false;player.visible=true;player.position.set(0,0,0);dog.position.set(0,0,5);angle=0;player.rotation.y=0;setParkView();for(const d of dirt)d.visible=care.phase==='wash';for(const drop of wetSpots)drop.visible=false;dog.rotation.z=0;showOutfit();stopDryer();clearBubbles();renderUI();}
 function act(){if(paused)return;if(stage==='collect'){keys.clear();enterCare();return;}if(stage==='chase'){if(player.position.distanceTo(dog.position)<3){stage='timing';marker=0;renderUI();}else toast(t('near'));}else if(stage==='timing'){if(marker>=.38&&marker<=.62)enterCare();else{misses++;stage='chase';dog.position.add(new THREE.Vector3(2,0,2));toast(t('near'));renderUI();}}}
-action.onclick=act;document.querySelector('#pause').onclick=()=>{paused=!paused;keys.clear();stopDryer();renderUI();};document.querySelector('#language').onchange=e=>{lang=e.target.value;stopDryer();renderUI();for(const b of bubbles)b.el.setAttribute('aria-label',t('wash'));};
+action.onclick=act;document.querySelector('#pause').onclick=()=>{paused=!paused;keys.clear();stopDryer();renderUI();};document.querySelector('#language').onchange=e=>{lang=e.target.value;stopDryer();renderUI();for(const b of bubbles)b.el.setAttribute('aria-label',`${t('wash')} · ${money(b.price)}`);};
 function clearBubbles(){for(const b of bubbles)b.el.remove();bubbles=[];selectedBubble=null;}
-function addBubble(){const el=document.createElement('button');el.className='bubble';el.setAttribute('aria-label',t('wash'));el.innerHTML=`◌<small>${money(economy.prices.bubble)}</small>`;const slots=[[15,42],[85,42],[20,65],[80,65],[50,78]];const slot=slots.findIndex((_,i)=>!bubbles.some(b=>b.slot===i));const b={el,slot,x:slots[slot][0],y:slots[slot][1]};el.style.left=b.x+'%';el.style.top=b.y+'%';layer.append(el);bubbles.push(b);el.addEventListener('pointerdown',e=>{if(paused)return;el.setPointerCapture(e.pointerId);selectedBubble=b;});el.addEventListener('pointermove',e=>{if(selectedBubble!==b||paused||stage!=='wash')return;el.style.left=e.clientX+'px';el.style.top=e.clientY+'px';});el.addEventListener('pointerup',e=>{if(selectedBubble!==b||paused||stage!=='wash')return;selectedBubble=null;const projected=dog.position.clone().add(new THREE.Vector3(0,1,0)).project(camera);const x=(projected.x*.5+.5)*innerWidth,y=(-projected.y*.5+.5)*innerHeight;if(Math.hypot(e.clientX-x,e.clientY-y)<Math.min(innerWidth,innerHeight)*.22){el.style.left=b.x+'%';el.style.top=b.y+'%';askPurchase('bubble',()=>{if(!payFor('bubble'))return;const done = care.washBubble();
-  const cleanedCount = Math.round(care.clean / 12.5);
-  for (let i = 0; i < cleanedCount; i++) dirt[i].visible = false;
-  el.remove();bubbles=bubbles.filter(v=>v!==b);
-  if(done)enterCare();else{addBubble();updateCareHud();}});}else{el.style.left=b.x+'%';el.style.top=b.y+'%';}});el.addEventListener('pointercancel',()=>{selectedBubble=null;el.style.left=b.x+'%';el.style.top=b.y+'%';});}
-const clock=new THREE.Clock();function loop(){requestAnimationFrame(loop);const dt=Math.min(clock.getDelta(),.05);if(!paused&&!mathTask){elapsed+=dt;dryerKnockTime=Math.max(0,dryerKnockTime-dt);if(stage==='chase'||stage==='collect'){updateCoins();const forward=(keys.has('w')||keys.has('arrowup')||keys.has('up')?1:0)-(keys.has('s')||keys.has('arrowdown')||keys.has('down')?1:0);const turn=(keys.has('a')||keys.has('arrowleft')||keys.has('left')?1:0)-(keys.has('d')||keys.has('arrowright')||keys.has('right')?1:0);angle+=turn*dt*2.2;player.rotation.y=angle;player.position.x+=Math.sin(angle)*forward*dt*5;player.position.z+=Math.cos(angle)*forward*dt*5;if(player.position.length()>37)player.position.setLength(37);owner.animate(elapsed,forward!==0);const dest=new THREE.Vector3(Math.sin(elapsed*.25)*13,0,Math.cos(elapsed*.25)*13);const dir=dest.sub(dog.position);if(dir.length()>.2){dog.position.addScaledVector(dir.normalize(),dt*2);dog.rotation.y=Math.atan2(dir.x,dir.z);}dog.position.y=Math.sin(elapsed*14)*.035;action.disabled=stage==='collect'?false:player.position.distanceTo(dog.position)>=3;}if(stage==='timing'){marker=(Math.sin(elapsed*3.5)+1)/2;document.querySelector('#marker').style.left=marker*100+'%';action.disabled=false;}if(stage==='wash'){if(economy.canPay('bubble'))care.tickWash(dt);updateCareHud();if(care.comfort<=0)escapeCare();}
+function buyBubble(b){
+  if(!economy.canPayAmount(b.price)){toast(t('insufficient'));return;}
+  const finish=()=>{
+    if(!economy.payAmount(b.price)){toast(t('insufficient'));return;}
+    renderWallet();
+    const done=care.washBubble();
+    const cleanedCount=Math.round(care.clean/12.5);
+    for(let i=0;i<cleanedCount;i++)dirt[i].visible=false;
+    b.el.remove();bubbles=bubbles.filter(v=>v!==b);
+    if(done)enterCare();else{addBubble();updateCareHud();}
+  };
+  if(Math.round(care.clean/12.5)%2===1)openMath(new MoneyQuestion(economy.balance,b.price),'bubble',finish);
+  else finish();
+}
+function addBubble(){
+  const slots=[[15,42],[85,42],[20,65],[80,65],[50,78]];
+  const slot=slots.findIndex((_,i)=>!bubbles.some(b=>b.slot===i));
+  const prices=[30,40,50,60,70,80].filter(price=>!bubbles.some(b=>b.price===price));
+  const price=prices[Math.floor(Math.random()*prices.length)];
+  const el=document.createElement('button');el.className='bubble';
+  el.setAttribute('aria-label',`${t('wash')} · ${money(price)}`);
+  el.innerHTML=`◌<small>${money(price)}</small>`;
+  const b={el,slot,price,x:slots[slot][0],y:slots[slot][1]};
+  const resetPosition=()=>{el.style.left=b.x+'%';el.style.top=b.y+'%';};
+  resetPosition();layer.append(el);bubbles.push(b);
+  el.addEventListener('pointerdown',e=>{if(paused||mathTask)return;el.setPointerCapture(e.pointerId);selectedBubble=b;});
+  el.addEventListener('pointermove',e=>{if(selectedBubble!==b||paused||stage!=='wash')return;el.style.left=e.clientX+'px';el.style.top=e.clientY+'px';});
+  el.addEventListener('pointerup',e=>{
+    if(selectedBubble!==b||paused||stage!=='wash')return;
+    selectedBubble=null;resetPosition();
+    const projected=dog.position.clone().add(new THREE.Vector3(0,1,0)).project(camera);
+    const x=(projected.x*.5+.5)*innerWidth,y=(-projected.y*.5+.5)*innerHeight;
+    if(Math.hypot(e.clientX-x,e.clientY-y)<Math.min(innerWidth,innerHeight)*.22)buyBubble(b);
+  });
+  el.addEventListener('pointercancel',()=>{selectedBubble=null;resetPosition();});
+}
+const clock=new THREE.Clock();function loop(){requestAnimationFrame(loop);const dt=Math.min(clock.getDelta(),.05);if(!paused&&!mathTask){elapsed+=dt;dryerKnockTime=Math.max(0,dryerKnockTime-dt);if(stage==='chase'||stage==='collect'){updateCoins();const forward=(keys.has('w')||keys.has('arrowup')||keys.has('up')?1:0)-(keys.has('s')||keys.has('arrowdown')||keys.has('down')?1:0);const turn=(keys.has('a')||keys.has('arrowleft')||keys.has('left')?1:0)-(keys.has('d')||keys.has('arrowright')||keys.has('right')?1:0);angle+=turn*dt*2.2;player.rotation.y=angle;player.position.x+=Math.sin(angle)*forward*dt*5;player.position.z+=Math.cos(angle)*forward*dt*5;if(player.position.length()>37)player.position.setLength(37);owner.animate(elapsed,forward!==0);const dest=new THREE.Vector3(Math.sin(elapsed*.25)*13,0,Math.cos(elapsed*.25)*13);const dir=dest.sub(dog.position);if(dir.length()>.2){dog.position.addScaledVector(dir.normalize(),dt*2);dog.rotation.y=Math.atan2(dir.x,dir.z);}dog.position.y=Math.sin(elapsed*14)*.035;action.disabled=stage==='collect'?false:player.position.distanceTo(dog.position)>=3;}if(stage==='timing'){marker=(Math.sin(elapsed*3.5)+1)/2;document.querySelector('#marker').style.left=marker*100+'%';action.disabled=false;}if(stage==='wash'){if(bubbles.some(b=>economy.canPayAmount(b.price)))care.tickWash(dt);updateCareHud();if(care.comfort<=0)escapeCare();}
 if(stage==='dry'){
   const finished = care.dry(dt,activeZone);
   if(care.dryerRejected)knockDryer();

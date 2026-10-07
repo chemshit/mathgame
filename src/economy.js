@@ -19,10 +19,12 @@ export class Economy {
     this.collected.add(id); this.balance += value; return true;
   }
   canPay(item) { return Number.isInteger(this.prices[item]) && this.balance >= this.prices[item]; }
-  pay(item) {
-    if (!this.canPay(item)) return false;
-    this.balance -= this.prices[item]; this.spent += this.prices[item]; return true;
+  canPayAmount(amount) { return Number.isInteger(amount) && amount > 0 && this.balance >= amount; }
+  payAmount(amount) {
+    if (!this.canPayAmount(amount)) return false;
+    this.balance -= amount; this.spent += amount; return true;
   }
+  pay(item) { return this.payAmount(this.prices[item]); }
   unlockDryer() {
     if (this.dryerPaid) return true;
     if (!this.pay('dryer')) return false;

@@ -31,3 +31,10 @@ test('100 rappen is one franc with localized units', () => {
   assert.equal(formatMoney(340),'3 Frank 40 Rappen');assert.equal(formatMoney(340,'de'),'3 Franken 40 Rappen');
   assert.equal(formatMoney(340,'en'),'3 francs 40 Rappen');
 });
+test('individual bubble prices debit exactly and never charge invalid or unaffordable amounts',()=>{
+ const e=new Economy();e.collect('coin',100);
+ for(const value of [undefined,NaN,-30,0,30.5,110])assert.equal(e.payAmount(value),false);
+ assert.equal(e.balance,100);assert.equal(e.spent,0);
+ assert.equal(e.payAmount(30),true);assert.equal(e.payAmount(60),true);
+ assert.equal(e.balance,10);assert.equal(e.spent,90);assert.equal(e.payAmount(40),false);
+});

@@ -33,7 +33,7 @@ Kız ve erkek farklı başlangıç saçları ve kıyafet detaylarıyla gelir. D�
 
 ![Karakter seçimi](docs/character.png)
 
-Her ücretli baloncuk, fön başlatma ve kıyafet denemesinde kalan para sorusu sorulur. Fiyatlar soruda da Frank/Rappen biçiminde görünür; cevaplar yan yana Frank ve Rappen kutularına yazılır. Rappen kısmı 0–99 olmalıdır; olmayan birime 0 yazılır. Yanlış cevap veya vazgeçme para kesmez. Soru açıkken oyun ve rahatlık sayacı durur. Doğru cevaptan sonra satın alma onaylanır.
+Yıkamada her ikinci başarılı baloncuk için kalan para sorusu sorulur; diğer baloncuklar doğrudan satın alınır. Ekrandaki baloncuklar farklı fiyatlara sahiptir (30–80 Rappen); her birinin fiyatı üzerinde görünür. Fön başlatma ve kıyafet denemelerinde her alışverişte soru sorulur. Fiyatlar soruda da Frank/Rappen biçiminde görünür; cevaplar yan yana Frank ve Rappen kutularına yazılır. Rappen kısmı 0–99 olmalıdır; olmayan birime 0 yazılır. Yanlış cevap veya vazgeçme para kesmez. Soru açıkken oyun ve rahatlık sayacı durur. Doğru cevapta işlem hemen tamamlanır; ikinci bir satın alma veya parka geçiş onayı gerekmez.
 
 Para toplamak için parka gitmeden önce rastgele Frank/Rappen toplama sorusu çözülür; örneğin 4 Frank 10 Rappen + 10 Frank 90 Rappen = 15 Frank 0 Rappen. Soru ödül para vermez, parka erişim sağlar. Dönüşte yarım kalan bakım korunur.
 
