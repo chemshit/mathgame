@@ -46,3 +46,7 @@ Park çapı 108 birimdir. Köpeğe yaklaşınca Yakala/Space zıplamayı başlat
 Karakterin güncel sürümü daha doğal baş/gövde oranları, parmaklar, bükülen dirsek ve dizler, göz kapağı hareketi, kumaş/saç/yüz için yerel üretilmiş hafif bump dokuları kullanır. Koşma ve kucaklama pozları eklem gruplarıyla hareket eder. Bu hâlâ prosedürel Three.js modelidir; Blender/GLB varlığı eklenmemiştir. Saç, şapka, ten ve kıyafet seçenekleri korunmuştur.
 
 Washing now takes place in a small shallow water tank with translucent sides and gentle ripples. Floating soap bubbles have reflective highlights and slowly drift in bounded paths; grabbing one holds it under the pointer, and questions/pause freeze movement. Bubble prices and every-second-bubble questions are unchanged. The washing patience countdown runs more slowly for a relaxed pace. Reduced-motion preferences stop bubble drift; focused bubbles can also be applied with Enter/Space. Dirt uses local mottled mud textures with soft transparent edges, and disappears as washing progresses. Water is hidden for drying and dressing.
+
+Yüzün güncel sürümü tek bir biçimlendirilmiş yüzey üzerinde burun, yanak ve çene geçişleri kullanır. Daha küçük gözler ve baş/gövde oranı doğal çocuk görünümünü destekler. Saçta uçlara doğru incelen tutamlar, kıyafette biçimlendirilmiş gövde kesimi, ince yaka, küçük cepler ve hafif kumaş kıvrımları vardır. Tüm görünüm seçimleri ve eklem animasyonları korunur.
+
+![Erkek karakter görünümü](docs/character-boy.png)
