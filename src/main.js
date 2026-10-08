@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import './style.css';
+import { GameSound } from './sound.js';
 import { CaptureSequence } from './capture.js';
 import { MoneyQuestion, collectionQuestion } from './math.js';
 import { createCharacter, HAIR_COLORS, SKIN_COLORS, OUTFIT_COLORS } from './character.js';
@@ -63,6 +64,9 @@ Object.assign(texts.de,{bubblePrice:'Seifenblasenpreis',bubbleRange:'Seifenblase
 Object.assign(texts.tr,{timing:'Zıpla ve yakala!',timingHelp:'Havada hedef yeşilken köpeğin üzerindeki halkaya tıkla veya dokun.',caughtPet:'Yakaladın! Bakım odasına gidiyoruz.',missedPet:'Köpek kaçtı! Yeniden yaklaş.',tap:'Yakala'});
 Object.assign(texts.en,{timing:'Jump and catch!',timingHelp:'While in the air, click or tap the ring on the puppy when it turns green.',caughtPet:'Caught! Heading to the care room.',missedPet:'The puppy got away! Get close again.',tap:'Catch'});
 Object.assign(texts.de,{timing:'Spring und fang!',timingHelp:'Klicke oder tippe in der Luft auf den Ring am Hund, wenn er grün wird.',caughtPet:'Gefangen! Auf zum Pflegeraum.',missedPet:'Der Hund ist entwischt! Geh wieder näher.',tap:'Fangen'});
+Object.assign(texts.tr,{washHelp:'Köpeği çevir, baloncukları işaretli kirli noktalara bırak.',rinse:'Durulama zamanı',rinseHelp:'Köpeği çevir. Köpüklü noktaları basılı tutarak suyla durula.',towel:'Havlu zamanı',towelHelp:'Havluları basılı tutup ileri geri sürükle. Klavyede Enter ile sil.',rinseProgress:'Durulama',towelProgress:'Havluyla kurulama',turnLeft:'Sola çevir',turnRight:'Sağa çevir',dirtySpot:'Kirli nokta',foamSpot:'Köpüklü nokta',targetDirt:'Baloncuğu işaretli kirli noktaya bırak.',soundOn:'Ses açık',soundOff:'Ses kapalı'});
+Object.assign(texts.en,{washHelp:'Turn the puppy and drop bubbles onto marked dirty spots.',rinse:'Rinse time',rinseHelp:'Turn the puppy. Hold each foamy spot to rinse it with water.',towel:'Towel time',towelHelp:'Hold and rub each towel back and forth. Use Enter with a keyboard.',rinseProgress:'Rinsing',towelProgress:'Towel drying',turnLeft:'Turn left',turnRight:'Turn right',dirtySpot:'Dirty spot',foamSpot:'Foamy spot',targetDirt:'Drop the bubble on a marked dirty spot.',soundOn:'Sound on',soundOff:'Sound off'});
+Object.assign(texts.de,{washHelp:'Drehe den Hund und ziehe Blasen auf markierte schmutzige Stellen.',rinse:'Zeit zum Abspülen',rinseHelp:'Drehe den Hund. Halte jede schaumige Stelle gedrückt, um sie abzuspülen.',towel:'Handtuchzeit',towelHelp:'Halte die Handtücher und reibe hin und her. Mit der Tastatur: Enter.',rinseProgress:'Abspülen',towelProgress:'Abtrocknen',turnLeft:'Nach links drehen',turnRight:'Nach rechts drehen',dirtySpot:'Schmutzige Stelle',foamSpot:'Schaumige Stelle',targetDirt:'Ziehe die Blase auf eine markierte schmutzige Stelle.',soundOn:'Ton an',soundOff:'Ton aus'});
 const t=k=>texts[lang][k];
 const app=document.querySelector('#app');
 app.innerHTML=`<canvas id="world"></canvas><header><strong>🐾 World Pet Wash <small>PROTOTYPE · 06</small></strong><div><div id="wallet"></div><select id="language" aria-label="Language"><option value="tr">Türkçe</option><option value="en">English</option><option value="de">Deutsch</option></select><button id="pause">Ⅱ</button></div></header><div id="panel"></div><div id="hud"></div><div id="controls"><div id="pad"><button data-dir="up">▲</button><div><button data-dir="left">◀</button><button data-dir="down">▼</button><button data-dir="right">▶</button></div></div><button id="action"></button></div><div id="toast" role="status"></div><div id="bubble-layer"></div><div id="dryer-layer"></div><div id="wardrobe"></div><div id="shop"></div><footer>World Pet Wash · browser prototype</footer>`;
@@ -113,7 +117,7 @@ function updateCoins() {
     coin.group.rotation.y=elapsed;
     coin.group.position.y=.65+Math.sin(elapsed*3+coin.value)*.08;
     if(Math.hypot(player.position.x-coin.group.position.x,player.position.z-coin.group.position.z)<.85&&economy.collect(coin.id,coin.value)){
-      coin.group.visible=false;renderWallet();toast(`${t('coinFound')}: +${money(coin.value)}`);
+      sound.play('coin');coin.group.visible=false;renderWallet();toast(`${t('coinFound')}: +${money(coin.value)}`);
     }
   }
 }
@@ -187,12 +191,66 @@ function showOutfit() {
   }
 }
 const shop=document.querySelector('#shop');
+const sound=new GameSound();
+addEventListener('pointerdown',()=>sound.unlock(),{once:true});addEventListener('keydown',()=>sound.unlock(),{once:true});
+const soundButton=document.createElement('button');soundButton.id='sound-toggle';document.querySelector('header>div').append(soundButton);
+soundButton.onclick=()=>{sound.toggle();renderSound();};
+function renderSound(){soundButton.textContent=sound.muted?'🔇':'🔊';soundButton.setAttribute('aria-label',t(sound.muted?'soundOff':'soundOn'));soundButton.setAttribute('aria-pressed',String(!sound.muted));}
+const careTools=document.createElement('div');careTools.id='care-tools';document.body.append(careTools);
+const spotLayer=document.createElement('div');spotLayer.id='spot-layer';document.body.append(spotLayer);
+let rinseZone=null,selectedDirt=null,lastWaterSound=0,towelVisualZone=0,towelVisualUntil=0,lastTowelSound=0;
+function syncSoap(){
+  for(let i=0;i<8;i++)dirt[i].visible=stage==='wash'&&!care.washedZones[i];
+  const levels=stage==='wash'?care.washedZones.map(value=>value?1:0):stage==='rinse'?care.foam.map(value=>value/100):Array(8).fill(0);
+  puppy.setFoam(levels);
+}
+function spotVisible(index){
+  const normal=new THREE.Vector3(index%2?1:-1,0,0).applyQuaternion(dog.quaternion);
+  const location=dog.localToWorld(dirt[index].position.clone());
+  return normal.dot(camera.position.clone().sub(location).normalize())>.15;
+}
+function spotPosition(index){const v=dog.localToWorld(dirt[index].position.clone()).project(camera);return {x:(v.x*.5+.5)*innerWidth,y:(-v.y*.5+.5)*innerHeight};}
+function renderCareTools(){
+  careTools.hidden=paused||!['wash','rinse','towel'].includes(stage);
+  spotLayer.hidden=paused||!['wash','rinse'].includes(stage);spotLayer.innerHTML='';rinseZone=null;
+  careTools.innerHTML=`<div class="pet-turn"><button id="pet-left">↶ ${t('turnLeft')}</button><button id="pet-right">${t('turnRight')} ↷</button></div>${stage==='towel'?`<div class="towel-zones">${zoneNames.map((name,i)=>`<button data-towel="${i}">▧ ${t(name)} <progress max="100" value="${care.towelProgress[i]}"></progress></button>`).join('')}</div>`:''}`;
+  for(const [id,sign]of [['pet-left',-1],['pet-right',1]])careTools.querySelector('#'+id).onclick=()=>{if(!paused&&!mathTask)dog.rotation.y+=sign*Math.PI/4;};
+  if(['wash','rinse'].includes(stage))for(let i=0;i<8;i++){
+    const button=document.createElement('button');button.className='care-spot';button.dataset.spot=i;button.textContent=stage==='wash'?'✦':'🚿';button.setAttribute('aria-label',`${t(stage==='wash'?'dirtySpot':'foamSpot')} ${i+1}`);
+    button.onclick=()=>{if(stage==='wash'){selectedDirt=i;spotLayer.querySelectorAll('button').forEach(b=>b.classList.toggle('selected',Number(b.dataset.spot)===i));}};
+    button.onpointerdown=e=>{if(stage==='rinse'&&!paused&&!mathTask){button.setPointerCapture(e.pointerId);rinseZone=i;}};
+    for(const ev of ['pointerup','pointercancel','lostpointercapture'])button.addEventListener(ev,()=>{if(rinseZone===i)rinseZone=null;});
+    button.onkeydown=e=>{if(['Enter',' '].includes(e.key)&&stage==='rinse'){e.preventDefault();rinseZone=i;}};
+    button.onkeyup=()=>rinseZone=null;spotLayer.append(button);
+  }
+  for(const button of careTools.querySelectorAll('[data-towel]')){
+    let last=null;
+    const rub=amount=>{if(paused||mathTask||stage!=='towel')return;const index=Number(button.dataset.towel);const done=care.towel(index,amount);towelVisualZone=index;towelVisualUntil=elapsed+.6;if(elapsed-lastTowelSound>.25){sound.play('towel');lastTowelSound=elapsed;}button.querySelector('progress').value=care.towelProgress[index];updateCareHud();if(done){sound.play('happy');enterCare();}};
+    button.onpointerdown=e=>{button.setPointerCapture(e.pointerId);last={x:e.clientX,y:e.clientY};};
+    button.onpointermove=e=>{if(!last)return;const distance=Math.hypot(e.clientX-last.x,e.clientY-last.y);if(distance>=12){last={x:e.clientX,y:e.clientY};rub(Math.min(25,distance*.6));}};
+    for(const ev of ['pointerup','pointercancel','lostpointercapture'])button.addEventListener(ev,()=>last=null);
+    button.onkeydown=e=>{if(['Enter',' '].includes(e.key)){e.preventDefault();rub(20);}};
+  }
+}
+function updateSpots(){
+  if(stage==='towel'){
+    const center=dog.localToWorld(new THREE.Vector3(0,1,0)).project(camera),cx=(center.x*.5+.5)*innerWidth,cy=(-center.y*.5+.5)*innerHeight;
+    for(const button of careTools.querySelectorAll('[data-towel]')){
+      const i=Number(button.dataset.towel),compact=innerHeight<600;
+      const x=cx+(i%2?1:-1)*(compact?115:140),y=cy+(i<2?-65:70);
+      button.style.left=Math.max(70,Math.min(innerWidth-70,x))+'px';
+      button.style.top=Math.max(compact?205:310,Math.min(innerHeight-110,y))+'px';
+    }
+  }
+  if(!['wash','rinse'].includes(stage))return;
+  for(const button of spotLayer.children){const i=Number(button.dataset.spot),p=spotPosition(i);button.hidden=paused||!spotVisible(i)||(stage==='wash'?care.washedZones[i]:care.foam[i]<=0);button.style.left=p.x+'px';button.style.top=p.y+'px';button.classList.toggle('spraying',rinseZone===i);}
+}
 function renderWallet(){const wallet=document.querySelector('#wallet');wallet.hidden=stage==='create';wallet.innerHTML=`<strong>🪙 ${t('wallet')}: ${money(economy.balance)}</strong><small>${t('moneyRule')}</small>`;}
 function payFor(item){if(!economy.pay(item)){toast(t('insufficient'));return false;}renderWallet();renderShop();return true;}
 function renderShop(){
-  shop.hidden=paused||!['wash','dry','dress'].includes(stage);
+  shop.hidden=paused||!['wash','rinse','towel','dry','dress'].includes(stage);
   if(shop.hidden)return;
-  const price=stage==='wash'?t('bubbleRange'):stage==='dry'?`${t('dryerPrice')}: ${money(economy.prices.dryer)}`:t('outfitPrice');
+  const price=stage==='wash'?t('bubbleRange'):stage==='dry'?`${t('dryerPrice')}: ${money(economy.prices.dryer)}`:stage==='dress'?t('outfitPrice'):t(stage);
   shop.innerHTML=`<strong>${price}</strong>${stage==='dry'?`<button id="buy-dryer" ${economy.dryerPaid?'disabled':''}>${economy.dryerPaid?t('paid'):t('unlock')}</button>`:''}<button id="collect-more">${t('moreCoins')}</button>`;
   document.querySelector('#collect-more').onclick=()=>openMath(collectionQuestion(), 'park', enterCollection);
   const buy=document.querySelector('#buy-dryer');if(buy)buy.onclick=()=>{
@@ -208,7 +266,7 @@ function knockDryer(){
   stopDryer();economy.dryerPaid=false;care.resetCurrentPhase();misses++;
   dryerKnockTime=1.2;renderShop();updateCareHud();toast(t('dryerThrown'));
 }
-function stopDryer() { activeZone = null; }
+function stopDryer() { activeZone = null; rinseZone=null; turningPointer=null; }
 function renderDryer() {
   dryerLayer.innerHTML = '';
   zoneNames.forEach((name, i) => {
@@ -306,6 +364,7 @@ function renderMath(){
   mathDialog.querySelector('form').onsubmit=e=>{
     e.preventDefault();if(mathTask?.settling)return;const correct=q.check(mathDialog.querySelector('#math-francs').value,mathDialog.querySelector('#math-rappen').value);
     if(correct){
+      sound.play('success');
       mathDialog.classList.remove('answer-error');
       const task=mathTask;
       if(task.settling)return;task.settling=true;
@@ -315,6 +374,7 @@ function renderMath(){
       for(const input of mathDialog.querySelectorAll('input'))input.disabled=true;
       setTimeout(()=>{if(mathTask!==task)return;closeMath();if(stage===task.stage&&!paused){toast(t('mathCorrect'));task.finish();}},550);
     }else{
+      sound.play('retry');
       mathDialog.classList.remove('answer-error');void mathDialog.offsetWidth;mathDialog.classList.add('answer-error');
       mathDialog.querySelector('#math-feedback').textContent=`${t('mathRetry')} ${t(isPark?'additionHint':'remainingHint')} ${money(q.left)} ${isPark?'+':'−'} ${money(q.right)}`;
       mathDialog.querySelector('input').select();
@@ -325,7 +385,7 @@ function updateCareHud() {
   const comfortBar = document.querySelector('#comfort');
   if (comfortBar) comfortBar.value = care.comfort;
   const progressBar = document.querySelector('#care-progress');
-  if (progressBar) progressBar.value = stage === 'wash' ? care.clean : stage === 'dry' ? care.dryness : Object.keys(care.outfit).length * 25;
+  if (progressBar) progressBar.value = stage==='wash'?care.clean:stage==='rinse'?care.rinsed:stage==='towel'?care.towelDried:stage==='dry'?care.dryness:Object.keys(care.outfit).length*25;
 }
 function escapeCare() {
   misses++;
@@ -340,7 +400,7 @@ function enterCare() {
   stage = care.phase;
   park.visible = false; clinic.visible = true; player.visible = false;
   dog.position.set(0,.83,0); dog.rotation.set(0,stage === 'dry' ? 1.1 : .3,0);
-  for (let i=0;i<dirt.length;i++)dirt[i].visible=stage==='wash'&&i>=Math.round(care.clean/12.5);
+  syncSoap();
   for (const drop of wetSpots) drop.visible = stage === 'dry';
   showOutfit();
   camera.position.set(0,3.6,7); camera.lookAt(0,1.6,0);
@@ -352,20 +412,24 @@ const keys=new Set();addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','A
 for(const btn of document.querySelectorAll('[data-dir]')){btn.addEventListener('pointerdown',e=>{btn.setPointerCapture(e.pointerId);keys.add(btn.dataset.dir);});for(const ev of ['pointerup','pointercancel','lostpointercapture'])btn.addEventListener(ev,()=>keys.delete(btn.dataset.dir));}
 function toast(message){const el=document.querySelector('#toast');el.textContent=message;clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.textContent='',4500);}
 let best=0;try{best=Number(localStorage.getItem('wpw-best'))||0;}catch{}
-function renderUI(){document.documentElement.lang=lang;dog.visible=stage!=='create';coinLayer.visible=['chase','timing','collect'].includes(stage);renderWallet();renderShop();document.querySelector('#pause').textContent=paused?t('resume'):t('pause');document.querySelector('#pause').hidden=stage==='create'||stage==='done';document.querySelector('#controls').style.display=(stage==='chase'||stage==='collect')&&!paused?'flex':'none';layer.hidden=stage!=='wash'||paused;dryerLayer.hidden=stage!=='dry'||paused;wardrobe.hidden=stage!=='dress'||paused;document.body.dataset.stage=stage;document.body.classList.toggle('is-paused',paused);if(paused)stopDryer();
-if(stage==='create'){renderCharacterEditor();return;}
+function renderUI(){document.documentElement.lang=lang;dog.visible=stage!=='create';coinLayer.visible=['chase','timing','collect'].includes(stage);renderWallet();renderShop();renderSound();renderCareTools();document.querySelector('#pause').textContent=paused?t('resume'):t('pause');document.querySelector('#pause').hidden=stage==='create'||stage==='done';document.querySelector('#controls').style.display=(stage==='chase'||stage==='collect')&&!paused?'flex':'none';layer.hidden=stage!=='wash'||paused;dryerLayer.hidden=stage!=='dry'||paused;wardrobe.hidden=stage!=='dress'||paused;document.body.dataset.stage=stage;document.body.classList.toggle('is-paused',paused);if(paused)stopDryer();
+if(stage==='create'){puppy.setFoam(Array(8).fill(0));renderCharacterEditor();return;}
 if(paused){panel.className='card centered';panel.innerHTML=`<h1>${t('paused')}</h1><button class="primary" id="resume">${t('resume')}</button>`;document.querySelector('#resume').onclick=()=>{paused=false;renderUI();};return;}
 if(stage==='done'){const stars=Math.max(1,3-Math.min(2,misses));best=Math.max(best,stars);try{localStorage.setItem('wpw-best',String(best));}catch{}panel.className='card centered';panel.innerHTML=`<div class="stars">${'★'.repeat(stars)}${'☆'.repeat(3-stars)}</div><h1>${t('done')}</h1><p>${t('doneHelp')}</p><p>${t('saved')}: ${'★'.repeat(best)}</p><p>${t('spent')}: ${money(economy.spent)}</p><button class="primary" id="again">${t('again')}</button>`;document.querySelector('#again').onclick=()=>{stage='create';park.visible=true;clinic.visible=false;player.visible=true;dog.position.set(2,0,0);dog.rotation.set(0,0,0);player.position.set(0,0,0);previewAngle=.25;care=new CareSession();showOutfit();for(const d of dirt)d.visible=true;for(const drop of wetSpots)drop.visible=false;renderUI();};hud.innerHTML='';return;}
-panel.className='instructions';panel.innerHTML=`<h2>${t(stage)}</h2><p>${t(stage+'Help')}</p>`;action.textContent=t(stage==='collect'?'returnCare':stage==='timing'?'tap':'catch');if(stage==='collect')action.disabled=false;const isCare = ['wash','dry','dress'].includes(stage);
-  const label = stage === 'wash' ? 'clean' : stage === 'dry' ? 'dryProgress' : 'outfitProgress';
+panel.className='instructions';panel.innerHTML=`<h2>${t(stage)}</h2><p>${t(stage+'Help')}</p>`;action.textContent=t(stage==='collect'?'returnCare':stage==='timing'?'tap':'catch');if(stage==='collect')action.disabled=false;const isCare = ['wash','rinse','towel','dry','dress'].includes(stage);
+  const label=stage==='wash'?'clean':stage==='rinse'?'rinseProgress':stage==='towel'?'towelProgress':stage==='dry'?'dryProgress':'outfitProgress';
   hud.innerHTML = isCare ? `<div>${t(label)} <progress id="care-progress" max="100" value="0" aria-label="${t(label)}"></progress></div><div>${t('patience')} <progress id="comfort" max="100" value="${care.comfort}" aria-label="${t('patience')}"></progress></div>` : '';
   if(stage==='dry') renderDryer();
   if(stage==='dress') renderWardrobe();
   updateCareHud();
 }
 
+let turningPointer=null;
+renderer.domElement.addEventListener('pointerdown',e=>{if(['wash','rinse','towel'].includes(stage)&&!paused&&!mathTask){renderer.domElement.setPointerCapture(e.pointerId);turningPointer=e.clientX;}});
+renderer.domElement.addEventListener('pointermove',e=>{if(turningPointer===null||paused||mathTask)return;dog.rotation.y+=(e.clientX-turningPointer)*.008;turningPointer=e.clientX;});
+for(const event of ['pointerup','pointercancel','lostpointercapture'])renderer.domElement.addEventListener(event,()=>turningPointer=null);
 function setParkView(){camera.position.set(0,4,-6);camera.lookAt(0,1,3);}
-function enterChase(){stage='chase';paused=false;park.visible=true;clinic.visible=false;player.visible=true;player.position.set(0,0,0);dog.position.set(0,0,5);angle=0;player.rotation.y=0;setParkView();for(const d of dirt)d.visible=care.phase==='wash';for(const drop of wetSpots)drop.visible=false;dog.rotation.z=0;showOutfit();stopDryer();clearBubbles();renderUI();}
+function enterChase(){stage='chase';paused=false;park.visible=true;clinic.visible=false;player.visible=true;player.position.set(0,0,0);dog.position.set(0,0,5);angle=0;player.rotation.y=0;setParkView();for(let i=0;i<dirt.length;i++)dirt[i].visible=care.phase==='wash'&&!care.washedZones[i];puppy.setFoam(Array(8).fill(0));for(const drop of wetSpots)drop.visible=false;dog.rotation.z=0;showOutfit();stopDryer();clearBubbles();renderUI();}
 let capture=null,jumpStart=new THREE.Vector3(),jumpEnd=new THREE.Vector3();
 const catchTarget=document.createElement('button');catchTarget.id='catch-target';catchTarget.hidden=true;catchTarget.textContent='◎';catchTarget.setAttribute('aria-label',t('catch'));document.body.append(catchTarget);
 catchTarget.onclick=()=>{if(paused||!capture)return;capture.click(true);};
@@ -405,14 +469,14 @@ function act(){if(paused)return;if(stage==='collect'){keys.clear();enterCare();r
 
 action.onclick=act;document.querySelector('#pause').onclick=()=>{paused=!paused;keys.clear();stopDryer();renderUI();};document.querySelector('#language').onchange=e=>{lang=e.target.value;stopDryer();renderUI();for(const b of bubbles)b.el.setAttribute('aria-label',`${t('wash')} · ${money(b.price)}`);};
 function clearBubbles(){for(const b of bubbles)b.el.remove();bubbles=[];selectedBubble=null;}
-function buyBubble(b){
+function buyBubble(b,zone=selectedDirt){
+  if(!Number.isInteger(zone)||care.washedZones[zone]||!spotVisible(zone)){toast(t('targetDirt'));return;}
   if(!economy.canPayAmount(b.price)){toast(t('insufficient'));return;}
   const finish=()=>{
     if(!economy.payAmount(b.price)){toast(t('insufficient'));return;}
     renderWallet();
-    const done=care.washBubble();
-    const cleanedCount=Math.round(care.clean/12.5);
-    for(let i=0;i<cleanedCount;i++)dirt[i].visible=false;
+    const done=care.washBubble(zone);sound.play(done?'happy':'pop');
+    syncSoap();
     b.el.remove();bubbles=bubbles.filter(v=>v!==b);
     if(done)enterCare();else{addBubble();updateCareHud();}
   };
@@ -426,7 +490,7 @@ function positionBubble(b){
   b.el.style.top=(b.y+Math.sin(elapsed*.3+b.slot*2.1)*3.5*drift)+'%';
 }
 function addBubble(){
-  const slots=[[15,42],[85,42],[20,65],[80,65],[50,78]];
+  const slots=[[15,42],[85,42],[20,65],[80,65],[50,innerHeight<600?58:72]];
   const slot=slots.findIndex((_,i)=>!bubbles.some(b=>b.slot===i));
   const prices=[30,40,50,60,70,80].filter(price=>!bubbles.some(b=>b.price===price));
   const price=prices[Math.floor(Math.random()*prices.length)];
@@ -441,14 +505,15 @@ function addBubble(){
   el.addEventListener('pointerup',e=>{
     if(selectedBubble!==b||paused||stage!=='wash')return;
     selectedBubble=null;resetPosition();
-    const projected=dog.position.clone().add(new THREE.Vector3(0,1,0)).project(camera);
-    const x=(projected.x*.5+.5)*innerWidth,y=(-projected.y*.5+.5)*innerHeight;
-    if(Math.hypot(e.clientX-x,e.clientY-y)<Math.min(innerWidth,innerHeight)*.22)buyBubble(b);
+    let nearest=null,best=48;
+    for(let i=0;i<8;i++)if(!care.washedZones[i]&&spotVisible(i)){const p=spotPosition(i),distance=Math.hypot(e.clientX-p.x,e.clientY-p.y);if(distance<best){nearest=i;best=distance;}}
+    if(nearest!==null)buyBubble(b,nearest);else toast(t('targetDirt'));
   });
   el.addEventListener('pointercancel',()=>{selectedBubble=null;resetPosition();});
   el.addEventListener('keydown',e=>{if(['Enter',' '].includes(e.key)){e.preventDefault();if(!paused&&!mathTask&&stage==='wash')buyBubble(b);}});
 }
 const clock=new THREE.Clock();function loop(){requestAnimationFrame(loop);const dt=Math.min(clock.getDelta(),.05);if(!paused&&!mathTask){elapsed+=dt;dryerKnockTime=Math.max(0,dryerKnockTime-dt);if(stage==='chase'||stage==='collect'){updateCoins();const forward=(keys.has('w')||keys.has('arrowup')||keys.has('up')?1:0)-(keys.has('s')||keys.has('arrowdown')||keys.has('down')?1:0);const turn=(keys.has('a')||keys.has('arrowleft')||keys.has('left')?1:0)-(keys.has('d')||keys.has('arrowright')||keys.has('right')?1:0);angle+=turn*dt*2.2;player.rotation.y=angle;player.position.x+=Math.sin(angle)*forward*dt*5;player.position.z+=Math.cos(angle)*forward*dt*5;if(player.position.length()>51)player.position.setLength(51);owner.animate(elapsed,forward!==0);const dest=new THREE.Vector3(Math.sin(elapsed*.25)*19,0,Math.cos(elapsed*.25)*19);const dir=dest.sub(dog.position);if(dir.length()>.2){dog.position.addScaledVector(dir.normalize(),dt*2);dog.rotation.y=Math.atan2(dir.x,dir.z);}dog.position.y=Math.sin(elapsed*14)*.035;action.disabled=stage==='collect'?false:player.position.distanceTo(dog.position)>=3;}if(stage==='timing'&&capture)updateCapture(dt);if(stage==='wash'){if(bubbles.some(b=>economy.canPayAmount(b.price)))care.tickWash(dt*.45);updateCareHud();if(care.comfort<=0)escapeCare();}
+if(stage==='rinse'&&rinseZone!==null){const done=care.rinse(dt,rinseZone);syncSoap();updateCareHud();if(elapsed-lastWaterSound>.5){sound.play('water');lastWaterSound=elapsed;}if(done){sound.play('happy');enterCare();}}
 if(stage==='dry'){
   const finished = care.dry(dt,activeZone);
   if(care.dryerRejected)knockDryer();
@@ -457,5 +522,5 @@ if(stage==='dry'){
   else updateCareHud();
 }
 }
-let target,look;if(stage==='chase'||stage==='timing'||stage==='collect'){target=player.position.clone().add(new THREE.Vector3(-Math.sin(angle)*6,4,-Math.cos(angle)*6));look=player.position.clone().add(new THREE.Vector3(Math.sin(angle)*3,1,Math.cos(angle)*3));}else if(['wash','dry','dress','done'].includes(stage)){const compact=innerHeight<600;const dressing=stage==='dress';target=new THREE.Vector3(dressing&&innerWidth>500?2:0,3.6,compact?5.8:7);look=new THREE.Vector3(dressing&&innerWidth>500?2:0,compact?2.5:1.6,0);}else{const portrait=innerWidth<600;target=new THREE.Vector3(portrait?-.8:-1.25,2.05,portrait?5.4:4.4);look=new THREE.Vector3(portrait?-.8:-1.25,1.13,0);dog.position.set(2,0,-.5);player.rotation.y=previewAngle;owner.animate(elapsed,false);}camera.position.lerp(target,1-Math.exp(-dt*6));camera.lookAt(look);positionCatchTarget();if(stage==='dry')updateDryer();const wet=stage==='wash'?care.clean/100:stage==='dry'?1-care.dryness/100:0;if(!paused){puppy.animate(elapsed,{running:stage==='chase'||stage==='collect'||capture?.phase==='miss',wet,comfort:care.comfort,blowing:stage==='dry'&&activeZone!==null,knocking:dryerKnockTime>0});const airTarget=stage==='dry'&&activeZone!==null?dog.localToWorld(zonePoints[activeZone].clone()):null;careRoom.animate(elapsed,{blowing:!!airTarget,target:airTarget,knock:dryerKnockTime,washing:stage==='wash'});}if(stage==='wash'&&!paused&&!mathTask)for(const b of bubbles)if(b!==selectedBubble)positionBubble(b);renderer.render(scene,camera);}
+let target,look;if(stage==='chase'||stage==='timing'||stage==='collect'){target=player.position.clone().add(new THREE.Vector3(-Math.sin(angle)*6,4,-Math.cos(angle)*6));look=player.position.clone().add(new THREE.Vector3(Math.sin(angle)*3,1,Math.cos(angle)*3));}else if(['wash','rinse','towel','dry','dress','done'].includes(stage)){const compact=innerHeight<600;const dressing=stage==='dress';target=new THREE.Vector3(dressing&&innerWidth>500?2:0,3.6,compact?5.8:7);look=new THREE.Vector3(dressing&&innerWidth>500?2:0,compact?2.5:1.6,0);}else{const portrait=innerWidth<600;target=new THREE.Vector3(portrait?-.8:-1.25,2.05,portrait?5.4:4.4);look=new THREE.Vector3(portrait?-.8:-1.25,1.13,0);dog.position.set(2,0,-.5);player.rotation.y=previewAngle;owner.animate(elapsed,false);}camera.position.lerp(target,1-Math.exp(-dt*6));camera.lookAt(look);positionCatchTarget();updateSpots();if(stage==='dry')updateDryer();const wet=['wash','rinse','towel'].includes(stage)?1:stage==='dry'?1-care.dryness/100:0;if(!paused){puppy.animate(elapsed,{running:stage==='chase'||stage==='collect'||capture?.phase==='miss',wet,comfort:care.comfort,blowing:stage==='dry'&&activeZone!==null,knocking:dryerKnockTime>0,happiness:care.clean/100});const airTarget=stage==='dry'&&activeZone!==null?dog.localToWorld(zonePoints[activeZone].clone()):null;const rinseTarget=stage==='rinse'&&rinseZone!==null?dog.localToWorld(dirt[rinseZone].position.clone()):null;const towelTarget=stage==='towel'&&elapsed<towelVisualUntil?dog.localToWorld(zonePoints[towelVisualZone].clone()):null;careRoom.animate(elapsed,{blowing:!!airTarget,target:airTarget,knock:dryerKnockTime,washing:stage==='wash'||stage==='rinse',rinseTarget,towelTarget});}if(stage==='wash'&&!paused&&!mathTask)for(const b of bubbles)if(b!==selectedBubble)positionBubble(b);renderer.render(scene,camera);}
 camera.position.set(innerWidth<600?-.8:-1.25,2.05,innerWidth<600?5.4:4.4);renderUI();loop();

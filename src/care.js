@@ -8,23 +8,38 @@ export class CareSession {
   }
   resetCurrentPhase() {
     this.comfort = 100;
-    if (this.phase === 'wash') this.clean = 0;
+    if (this.phase === 'wash') { this.clean = 0; this.washedZones=Array(8).fill(false); }
+    if (this.phase === 'rinse') this.foam=Array(8).fill(100);
+    if (this.phase === 'towel') this.towelProgress=Array(4).fill(0);
     if (this.phase === 'dry') {
       this.dryerRejected = false;
-      this.wetness = [100, 100, 100, 100];
+      this.wetness = Array(4).fill(this.towelDone ? 60 : 100);
       this.heat = [0, 0, 0, 0];
     }
     if (this.phase === 'dress') this.outfit = {};
   }
-  washBubble() {
-    if (this.phase !== 'wash') return false;
-    this.clean = Math.min(100, this.clean + 12.5);
-    this.comfort = Math.min(100, this.comfort + 8);
-    if (this.clean < 100) return false;
-    this.phase = 'dry';
-    this.resetCurrentPhase();
-    return true;
+  washBubble(zone = this.washedZones?.findIndex(value=>!value)) {
+    if(this.phase!=='wash'||!Number.isInteger(zone)||zone<0||zone>=8||this.washedZones[zone])return false;
+    this.washedZones[zone]=true;
+    this.clean=this.washedZones.filter(Boolean).length*12.5;
+    this.comfort=Math.min(100,this.comfort+8);
+    if(this.clean<100)return false;
+    this.phase='rinse';this.resetCurrentPhase();return true;
   }
+  rinse(dt,zone) {
+    if(this.phase!=='rinse'||!Number.isInteger(zone)||zone<0||zone>=8)return false;
+    this.foam[zone]=Math.max(0,this.foam[zone]-dt*65);
+    if(this.foam.some(value=>value>0))return false;
+    this.phase='towel';this.resetCurrentPhase();return true;
+  }
+  towel(zone,stroke) {
+    if(this.phase!=='towel'||!Number.isInteger(zone)||zone<0||zone>=4||!(stroke>0))return false;
+    this.towelProgress[zone]=Math.min(100,this.towelProgress[zone]+Math.min(stroke,25));
+    if(this.towelProgress.some(value=>value<100))return false;
+    this.towelDone=true;this.phase='dry';this.resetCurrentPhase();return true;
+  }
+  get rinsed(){return 100-this.foam.reduce((sum,value)=>sum+value,0)/8;}
+  get towelDried(){return this.towelProgress.reduce((sum,value)=>sum+value,0)/4;}
   tickWash(dt) { this.comfort = Math.max(0, this.comfort - dt * 3); }
   dry(dt, activeZone) {
     if (this.phase !== 'dry' || this.dryerRejected) return false;

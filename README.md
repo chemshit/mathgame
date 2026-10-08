@@ -11,17 +11,17 @@ npm run build
 npm test
 ```
 
-Karakter seçimi → parkta köpeği yakalama → zamanlama oyunu → baloncukları sürükleyerek yıkama → kontrollü fön → kıyafet seçimi → yıldız değerlendirmesi.
+Karakter seçimi → parkta köpeği yakalama → zamanlama oyunu → kirli noktalara baloncuk uygulama → suyla durulama → havluyla silme → kontrollü fön → kıyafet seçimi → yıldız değerlendirmesi.
 
-WASD / ok tuşları: ileri, geri ve dönüş. Boşluk: yakalama/zamanlama. Telefonda ekran düğmeleri kullanılır; yatay ekran önerilir. Yıkamada baloncukları köpeğin üzerine bırakın. Fön ekranında dört ıslak bölgenin düğmelerinde basılı tutun; sıcaklık göstergesi kırmızıya dönmeden başka bölgeye geçin. Bırakınca bölge soğur. Fare, dokunmatik veya odaklanmış düğmede boşluk/Enter kullanılabilir. Kıyafet ekranında köpeğin sevdiği rengi takip ederek toka, gözlük, şapka ve kıyafet seçin. Dört beğenilen seçimden sonra bakımı tamamlayın. Beğenmediği her seçim rahatlığı azaltır. Kaçışta köpeği yeniden yakalayıp yalnızca yarım kalan aşamayı baştan tamamlayın; biten yıkama ve fön korunur. En iyi yıldız sonucu tarayıcıda saklanır. Hesap veya sunucu gerekmez.
+WASD / ok tuşları: ileri, geri ve dönüş. Boşluk: yakalama/zamanlama. Telefonda ekran düğmeleri kullanılır; yatay ekran önerilir. Yıkamada köpeği döndürüp baloncukları görünen, işaretli kirli noktalara bırakın. Durulamada köpüklü noktaları basılı tutun; havluda dört bölgeyi ileri geri silin. Fön ekranında dört ıslak bölgenin düğmelerinde basılı tutun; sıcaklık göstergesi kırmızıya dönmeden başka bölgeye geçin. Bırakınca bölge soğur. Fare, dokunmatik veya odaklanmış düğmede boşluk/Enter kullanılabilir. Kıyafet ekranında köpeğin sevdiği rengi takip ederek toka, gözlük, şapka ve kıyafet seçin. Dört beğenilen seçimden sonra bakımı tamamlayın. Beğenmediği her seçim rahatlığı azaltır. Kaçışta köpeği yeniden yakalayıp yalnızca yarım kalan aşamayı baştan tamamlayın; biten yıkama ve fön korunur. En iyi yıldız sonucu tarayıcıda saklanır. Hesap veya sunucu gerekmez.
 
-Tüy kesimi, hesap soruları ve sahiplenme sonrası kişiselleştirme sonraki sürümlerdedir. Köpek ve bakım odası özgün, yumuşak hatlı 3B modellerden oluşur (`src/visuals.js`). Köpekte yerel olarak üretilen tüy dokusu, doğal patiler, göz kırpma, kuyruk ve koşma animasyonları; odada küvet, dolaplar, havlular, şişeler ve hareketli fön vardır. Harici model veya görsel servisi gerekmez. Odanın sabit detayları malzemeye göre birleştirilir; tüy demetleri tek instanced çizimde gösterilir. Üretim sürümü için mobil cihazlarda performans ve erişilebilirlik ayrıca doğrulanmalıdır.
+Tüy kesimi ve sahiplenme sonrası kişiselleştirme sonraki sürümlerdedir. Köpek ve bakım odası özgün, yumuşak hatlı 3B modellerden oluşur (`src/visuals.js`). Köpekte yerel olarak üretilen tüy dokusu, doğal patiler, göz kırpma, kuyruk ve koşma animasyonları; odada küvet, dolaplar, havlular, şişeler ve hareketli fön vardır. Harici model veya görsel servisi gerekmez. Odanın sabit detayları malzemeye göre birleştirilir; tüy demetleri tek instanced çizimde gösterilir. Üretim sürümü için mobil cihazlarda performans ve erişilebilirlik ayrıca doğrulanmalıdır.
 
 ## Rappen ve Frank
 
 ![Parkta Rappen ve Frank toplama](docs/coin-park.png)
 
-Büyütülmüş parkta 5, 10, 20 ve 50 Rappen; 1, 2 ve 5 Frank değerinde oyun paraları toplanır. 100 Rappen = 1 Frank. Cüzdan her yeni oyunda sıfırlanır; fiyatlar yeni oyun başında değişir ve o oyun boyunca sabit kalır. Baloncuk başına ödeme yapılır. Fön her denemede bir kez açılır; düğmeye basılı tutmak tekrar ücretlendirilmez. Her yeni kıyafet denemesi ücretlidir; zaten giyilen seçeneğe yeniden basmak ücretsizdir.
+Büyütülmüş parkta 5, 10, 20 ve 50 Rappen; 1, 2 ve 5 Frank değerinde oyun paraları toplanır. 100 Rappen = 1 Frank. Cüzdan her yeni oyunda sıfırlanır; fön ve kıyafet fiyatları yeni oyun başında değişir ve o oyun boyunca sabit kalır. Baloncuklar kendi üzerlerinde gösterilen farklı fiyatlara sahiptir. Baloncuk başına ödeme yapılır. Fön her denemede bir kez açılır; düğmeye basılı tutmak tekrar ücretlendirilmez. Her yeni kıyafet denemesi ücretlidir; zaten giyilen seçeneğe yeniden basmak ücretsizdir.
 
 Para yetmezse işlemler gerçekleşmez ve cüzdan eksiye düşmez. “Parkta para topla” ile yarım kalan bakımın ilerlemesi korunarak para toplanabilir; “Bakıma dön” tekrar yakalamadan kaldığınız yerden devam eder. Gerçek kaçışta yalnızca yarım kalan aşama sıfırlanır; ödenen ücretler iade edilmez. Bütün paralar toplanırsa yeni bir parti oluşur. Parası olmayan oyuncunun yıkama bekleme süresi durur.
 
@@ -45,8 +45,16 @@ Park çapı 108 birimdir. Köpeğe yaklaşınca Yakala/Space zıplamayı başlat
 
 Karakterin güncel sürümü daha doğal baş/gövde oranları, parmaklar, bükülen dirsek ve dizler, göz kapağı hareketi, kumaş/saç/yüz için yerel üretilmiş hafif bump dokuları kullanır. Koşma ve kucaklama pozları eklem gruplarıyla hareket eder. Bu hâlâ prosedürel Three.js modelidir; Blender/GLB varlığı eklenmemiştir. Saç, şapka, ten ve kıyafet seçenekleri korunmuştur.
 
-Washing now takes place in a small shallow water tank with translucent sides and gentle ripples. Floating soap bubbles have reflective highlights and slowly drift in bounded paths; grabbing one holds it under the pointer, and questions/pause freeze movement. Bubble prices and every-second-bubble questions are unchanged. The washing patience countdown runs more slowly for a relaxed pace. Reduced-motion preferences stop bubble drift; focused bubbles can also be applied with Enter/Space. Dirt uses local mottled mud textures with soft transparent edges, and disappears as washing progresses. Water is hidden for drying and dressing.
+Washing now takes place in a small shallow water tank with translucent sides and gentle ripples. Floating soap bubbles have reflective highlights and slowly drift in bounded paths; grabbing one holds it under the pointer, and questions/pause freeze movement. Bubble prices and every-second-bubble questions are unchanged. The washing patience countdown runs more slowly for a relaxed pace. Reduced-motion preferences stop bubble drift; select a visible dirty marker, then apply a focused bubble with Enter/Space. Dirt uses local mottled mud textures with soft transparent edges, and disappears as washing progresses. Water is hidden for drying and dressing.
 
 Yüzün güncel sürümü tek bir biçimlendirilmiş yüzey üzerinde burun, yanak ve çene geçişleri kullanır. Daha küçük gözler ve baş/gövde oranı doğal çocuk görünümünü destekler. Saçta uçlara doğru incelen tutamlar, kıyafette biçimlendirilmiş gövde kesimi, ince yaka, küçük cepler ve hafif kumaş kıvrımları vardır. Tüm görünüm seçimleri ve eklem animasyonları korunur.
 
 ![Erkek karakter görünümü](docs/character-boy.png)
+
+
+Genişletilmiş bakım akışı: sekiz kirli bölge ayrı ayrı köpüklenir. Döndürme düğmeleri veya köpeğin üzerindeki yatay sürükleme ile diğer taraf açılır. Yanlış veya zaten temiz bir noktaya uygulama ücretlendirilmez. Köpük 3B olarak birikir; durulamada su akışıyla kademeli azalır. Durulama ve havlu bu sürümde ücretsizdir. Havlu bölgelerinde fare/dokunmatik ileri geri hareket veya Enter/Space kullanılır. Havlu sonrasında %60 ıslaklık kalır; fön yeniden başlatılırsa bu başlangıç korunur. Parktan dönüşte yarım kalan durulama/havlu ilerlemesi de korunur.
+
+Yerel Web Audio sesleri: baloncuk, coin, cevap geri bildirimi, su, havlu ve başarılı bakım. Başlıktaki ses düğmesi tercihi tarayıcıda saklar; ses ilk oyuncu etkileşimiyle etkinleşir. Köpeğin kuyruk hareketi temizlendikçe daha neşeli olur.
+
+![Köpüklü yıkama](docs/foam-wash.png)
+![Durulama](docs/rinse.png)

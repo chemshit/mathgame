@@ -4,16 +4,18 @@ import { CareSession, OUTFIT_CATEGORIES } from '../src/care.js';
 function washed() {
   const care = new CareSession();
   for (let i = 0; i < 8; i++) care.washBubble();
+  for(let i=0;i<8;i++)care.rinse(2,i);
+  for(let i=0;i<4;i++)for(let j=0;j<4;j++)care.towel(i,25);
   return care;
 }
-test('washing advances to drying and a retry preserves completed washing', () => {
+test('washing, rinsing and towels reach drying; retry preserves completed care', () => {
   const care = washed();
   assert.equal(care.phase, 'dry');
   assert.equal(care.clean, 100);
   care.dry(1, 0);
   care.resetCurrentPhase();
   assert.equal(care.clean, 100);
-  assert.deepEqual(care.wetness, [100, 100, 100, 100]);
+  assert.deepEqual(care.wetness, [60, 60, 60, 60]);
 });
 test('moving the dryer between zones finishes without overheating', () => {
   const care = washed();
@@ -33,7 +35,7 @@ test('dryer rejects immediately on entering red, before comfort runs out', () =>
   assert.equal(care.phase,'dry');
   const wet=care.wetness[0];care.dry(1,0);assert.equal(care.wetness[0],wet);
   care.resetCurrentPhase();assert.equal(care.dryerRejected,false);
-  assert.equal(care.clean,100);assert.equal(care.dryness,0);
+  assert.equal(care.clean,100);assert.equal(care.dryness,40);
 });
 test('release cools the dryer zone before the red threshold', () => {
   const care = washed();
@@ -57,4 +59,17 @@ test('dress rejection escapes after four mistakes and retries only dressing', ()
   assert.deepEqual(care.outfit, {});
   for (const category of OUTFIT_CATEGORIES) assert.equal(care.choose(category, 'mint'), 'like');
   assert.equal(care.dressed, true);
+});
+
+test('targeted washing rejects duplicate spots and rinse removes all foam before towels',()=>{
+ const care=new CareSession();assert.equal(care.washBubble(3),false);assert.equal(care.clean,12.5);
+ care.washBubble(3);assert.equal(care.clean,12.5);care.washBubble(-1);assert.equal(care.clean,12.5);
+ for(const i of [0,1,2,4,5,6,7])care.washBubble(i);
+ assert.equal(care.phase,'rinse');assert.equal(care.clean,100);assert.equal(care.rinsed,0);
+ care.rinse(1,0);assert.equal(care.foam[0],35);assert.equal(care.phase,'rinse');
+ for(let i=0;i<8;i++)care.rinse(2,i);
+ assert.equal(care.phase,'towel');assert.equal(care.towelDried,0);
+ for(let i=0;i<4;i++)for(let j=0;j<4;j++)care.towel(i,25);
+ assert.equal(care.phase,'dry');assert.equal(care.dryness,40);assert.equal(care.towelDone,true);
+ care.resetCurrentPhase();assert.equal(care.dryness,40);assert.equal(care.clean,100);
 });

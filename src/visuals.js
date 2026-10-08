@@ -112,8 +112,19 @@ export function createPuppy() {
     const patch=oval(root,mudMaterial,[(i%2?1:-1)*x,y,z],[.013,.13,.18]);
     patch.rotation.z=(i%2?1:-1)*.2;dirt.push(patch);
   }
+  const foamGroups=dirt.map((patch,index)=>{
+    const group=new THREE.Group();group.position.copy(patch.position);root.add(group);
+    const soap=new THREE.MeshStandardMaterial({color:'#fffdf3',roughness:.45});
+    for(let i=0;i<7;i++){
+      const a=i*2.4;
+      const position=i<3?[(index%2?1:-1)*.12+Math.sin(a)*.045-patch.position.x,1.22-patch.position.y,Math.cos(a)*.065]:[(index%2?1:-1)*.028,Math.sin(a)*.07,Math.cos(a)*.10];
+      oval(group,soap,position,[.075,.06,.085]);
+    }
+    group.visible=false;return group;
+  });
+  function setFoam(levels){foamGroups.forEach((group,i)=>{group.visible=levels[i]>0;group.scale.setScalar(.55+levels[i]*.45);});}
   const dryColor=new THREE.Color('#d7a463'),wetColor=new THREE.Color('#a78151');
-  function animate(time, { running=false, wet=0, comfort=100, blowing=false, knocking=false }={}) {
+  function animate(time, { running=false, wet=0, comfort=100, blowing=false, knocking=false,happiness=0 }={}) {
     for(let i=0;i<legPivots.length;i++)legPivots[i].rotation.x=running?Math.sin(time*13+(i===0||i===3?0:Math.PI))*.45:0;
     if(knocking)legPivots[0].rotation.x=-1.1;
     body.scale.y=.46*(1+Math.sin(time*2.5)*.012);
@@ -123,11 +134,11 @@ export function createPuppy() {
     const blink=(time%4.6)>4.42;
     eyes.forEach(eye=>eye.scale.y=blink?.12:comfort<40?.7:1);
     tongue.visible=comfort>35;
-    tail.rotation.y=Math.sin(time*(comfort>50?7:3))*(comfort>50?.38:.12);
+    tail.rotation.y=Math.sin(time*(comfort>50?3+happiness*4:3))*(comfort>50?.16+happiness*.22:.12);
     coat.roughness=.92-wet*.24;coat.color.copy(dryColor).lerp(wetColor,wet);
     tufts.scale.set(1,wet>.5?.97:1,1);
   }
-  return {root,head,tail,dirt,animate};
+  return {root,head,tail,dirt,animate,setFoam};
 }
 
 export function createCareRoom() {
@@ -221,6 +232,12 @@ export function createCareRoom() {
     const ripple=add(waterTank,new THREE.RingGeometry(.18,.19,40),new THREE.MeshBasicMaterial({color:'#e2fbff',transparent:true,opacity:.3,depthWrite:false,side:THREE.DoubleSide}),[(i%2?1:-1)*.9,.98,(i<2?1:-1)*.55]);
     ripple.rotation.x=-Math.PI/2;ripple.castShadow=false;ripples.push(ripple);
   }
+  const shower=new THREE.Group();root.add(shower);
+  const nozzle=rounded(shower,[.12,.07,.22],'#bdcccd',[0,0,0],.03);
+  const droplets=[];
+  for(let i=0;i<12;i++){const drop=oval(shower,new THREE.MeshBasicMaterial({color:'#8bd9f0',transparent:true,opacity:.7}),[0,0,0],[.012,.045,.012]);drop.castShadow=false;droplets.push(drop);}
+  const towel=rounded(root,[.48,.035,.32],'#fff2dc',[0,0,0],.02);
+  shower.visible=false;towel.visible=false;
   const dryer=new THREE.Group();root.add(dryer);
   rounded(dryer,[.42,.38,.68],coral,[0,0,0],.12);
   add(dryer,new THREE.CylinderGeometry(.12,.18,.34,16),material('#56666b'),[0,0,.43]).rotation.x=Math.PI/2;
@@ -232,7 +249,10 @@ export function createCareRoom() {
   air.visible=false;
   // This light only runs with the room; no additional shadow map is allocated.
   const warmLight=new THREE.PointLight('#ffe2bd',10,14,2);warmLight.position.set(-3,4,1);root.add(warmLight);
-  function animate(time, {blowing=false,target=null,knock=0,washing=false}={}) {
+  function animate(time, {blowing=false,target=null,knock=0,washing=false,rinseTarget=null,towelTarget=null}={}) {
+    shower.visible=!!rinseTarget;towel.visible=!!towelTarget;
+    if(rinseTarget){shower.position.copy(rinseTarget).add(new THREE.Vector3(.08,.45,.08));droplets.forEach((drop,i)=>{const p=(time*1.6+i/12)%1;drop.position.set(Math.sin(i*2.4)*.045,-p*.42,Math.cos(i*2.4)*.045);});}
+    if(towelTarget){towel.position.copy(towelTarget).add(new THREE.Vector3(Math.sin(time*18)*.08,.05,.08));towel.rotation.set(.3,time*.2,.15);}
     waterTank.visible=washing;water.position.y=.97+Math.sin(time*.8)*.008;
     ripples.forEach((r,i)=>{const p=(time*.16+i*.25)%1;r.scale.setScalar(.7+p*2);r.material.opacity=(1-p)*.25;});
     if(knock>0) {
