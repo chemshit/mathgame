@@ -419,6 +419,12 @@ function buyBubble(b){
   if(Math.round(care.clean/12.5)%2===1)openMath(new MoneyQuestion(economy.balance,b.price),'bubble',finish);
   else finish();
 }
+const gentleMotion=matchMedia('(prefers-reduced-motion: reduce)');
+function positionBubble(b){
+  const drift=gentleMotion.matches?0:1;
+  b.el.style.left=(b.x+Math.sin(elapsed*.38+b.slot*1.7)*3*drift)+'%';
+  b.el.style.top=(b.y+Math.sin(elapsed*.3+b.slot*2.1)*3.5*drift)+'%';
+}
 function addBubble(){
   const slots=[[15,42],[85,42],[20,65],[80,65],[50,78]];
   const slot=slots.findIndex((_,i)=>!bubbles.some(b=>b.slot===i));
@@ -426,9 +432,9 @@ function addBubble(){
   const price=prices[Math.floor(Math.random()*prices.length)];
   const el=document.createElement('button');el.className='bubble';
   el.setAttribute('aria-label',`${t('wash')} · ${money(price)}`);
-  el.innerHTML=`◌<small>${money(price)}</small>`;
+  el.innerHTML=`<span class="soap-glint" aria-hidden="true"></span><small>${money(price)}</small>`;
   const b={el,slot,price,x:slots[slot][0],y:slots[slot][1]};
-  const resetPosition=()=>{el.style.left=b.x+'%';el.style.top=b.y+'%';};
+  const resetPosition=()=>positionBubble(b);
   resetPosition();layer.append(el);bubbles.push(b);
   el.addEventListener('pointerdown',e=>{if(paused||mathTask)return;el.setPointerCapture(e.pointerId);selectedBubble=b;});
   el.addEventListener('pointermove',e=>{if(selectedBubble!==b||paused||stage!=='wash')return;el.style.left=e.clientX+'px';el.style.top=e.clientY+'px';});
@@ -440,8 +446,9 @@ function addBubble(){
     if(Math.hypot(e.clientX-x,e.clientY-y)<Math.min(innerWidth,innerHeight)*.22)buyBubble(b);
   });
   el.addEventListener('pointercancel',()=>{selectedBubble=null;resetPosition();});
+  el.addEventListener('keydown',e=>{if(['Enter',' '].includes(e.key)){e.preventDefault();if(!paused&&!mathTask&&stage==='wash')buyBubble(b);}});
 }
-const clock=new THREE.Clock();function loop(){requestAnimationFrame(loop);const dt=Math.min(clock.getDelta(),.05);if(!paused&&!mathTask){elapsed+=dt;dryerKnockTime=Math.max(0,dryerKnockTime-dt);if(stage==='chase'||stage==='collect'){updateCoins();const forward=(keys.has('w')||keys.has('arrowup')||keys.has('up')?1:0)-(keys.has('s')||keys.has('arrowdown')||keys.has('down')?1:0);const turn=(keys.has('a')||keys.has('arrowleft')||keys.has('left')?1:0)-(keys.has('d')||keys.has('arrowright')||keys.has('right')?1:0);angle+=turn*dt*2.2;player.rotation.y=angle;player.position.x+=Math.sin(angle)*forward*dt*5;player.position.z+=Math.cos(angle)*forward*dt*5;if(player.position.length()>51)player.position.setLength(51);owner.animate(elapsed,forward!==0);const dest=new THREE.Vector3(Math.sin(elapsed*.25)*19,0,Math.cos(elapsed*.25)*19);const dir=dest.sub(dog.position);if(dir.length()>.2){dog.position.addScaledVector(dir.normalize(),dt*2);dog.rotation.y=Math.atan2(dir.x,dir.z);}dog.position.y=Math.sin(elapsed*14)*.035;action.disabled=stage==='collect'?false:player.position.distanceTo(dog.position)>=3;}if(stage==='timing'&&capture)updateCapture(dt);if(stage==='wash'){if(bubbles.some(b=>economy.canPayAmount(b.price)))care.tickWash(dt);updateCareHud();if(care.comfort<=0)escapeCare();}
+const clock=new THREE.Clock();function loop(){requestAnimationFrame(loop);const dt=Math.min(clock.getDelta(),.05);if(!paused&&!mathTask){elapsed+=dt;dryerKnockTime=Math.max(0,dryerKnockTime-dt);if(stage==='chase'||stage==='collect'){updateCoins();const forward=(keys.has('w')||keys.has('arrowup')||keys.has('up')?1:0)-(keys.has('s')||keys.has('arrowdown')||keys.has('down')?1:0);const turn=(keys.has('a')||keys.has('arrowleft')||keys.has('left')?1:0)-(keys.has('d')||keys.has('arrowright')||keys.has('right')?1:0);angle+=turn*dt*2.2;player.rotation.y=angle;player.position.x+=Math.sin(angle)*forward*dt*5;player.position.z+=Math.cos(angle)*forward*dt*5;if(player.position.length()>51)player.position.setLength(51);owner.animate(elapsed,forward!==0);const dest=new THREE.Vector3(Math.sin(elapsed*.25)*19,0,Math.cos(elapsed*.25)*19);const dir=dest.sub(dog.position);if(dir.length()>.2){dog.position.addScaledVector(dir.normalize(),dt*2);dog.rotation.y=Math.atan2(dir.x,dir.z);}dog.position.y=Math.sin(elapsed*14)*.035;action.disabled=stage==='collect'?false:player.position.distanceTo(dog.position)>=3;}if(stage==='timing'&&capture)updateCapture(dt);if(stage==='wash'){if(bubbles.some(b=>economy.canPayAmount(b.price)))care.tickWash(dt*.45);updateCareHud();if(care.comfort<=0)escapeCare();}
 if(stage==='dry'){
   const finished = care.dry(dt,activeZone);
   if(care.dryerRejected)knockDryer();
@@ -450,5 +457,5 @@ if(stage==='dry'){
   else updateCareHud();
 }
 }
-let target,look;if(stage==='chase'||stage==='timing'||stage==='collect'){target=player.position.clone().add(new THREE.Vector3(-Math.sin(angle)*6,4,-Math.cos(angle)*6));look=player.position.clone().add(new THREE.Vector3(Math.sin(angle)*3,1,Math.cos(angle)*3));}else if(['wash','dry','dress','done'].includes(stage)){const compact=innerHeight<600;const dressing=stage==='dress';target=new THREE.Vector3(dressing&&innerWidth>500?2:0,3.6,compact?5.8:7);look=new THREE.Vector3(dressing&&innerWidth>500?2:0,compact?2.5:1.6,0);}else{const portrait=innerWidth<600;target=new THREE.Vector3(portrait?-.8:-1.25,2.05,portrait?5.4:4.4);look=new THREE.Vector3(portrait?-.8:-1.25,1.13,0);dog.position.set(2,0,-.5);player.rotation.y=previewAngle;owner.animate(elapsed,false);}camera.position.lerp(target,1-Math.exp(-dt*6));camera.lookAt(look);positionCatchTarget();if(stage==='dry')updateDryer();const wet=stage==='wash'?care.clean/100:stage==='dry'?1-care.dryness/100:0;if(!paused){puppy.animate(elapsed,{running:stage==='chase'||stage==='collect'||capture?.phase==='miss',wet,comfort:care.comfort,blowing:stage==='dry'&&activeZone!==null,knocking:dryerKnockTime>0});const airTarget=stage==='dry'&&activeZone!==null?dog.localToWorld(zonePoints[activeZone].clone()):null;careRoom.animate(elapsed,{blowing:!!airTarget,target:airTarget,knock:dryerKnockTime});}renderer.render(scene,camera);}
+let target,look;if(stage==='chase'||stage==='timing'||stage==='collect'){target=player.position.clone().add(new THREE.Vector3(-Math.sin(angle)*6,4,-Math.cos(angle)*6));look=player.position.clone().add(new THREE.Vector3(Math.sin(angle)*3,1,Math.cos(angle)*3));}else if(['wash','dry','dress','done'].includes(stage)){const compact=innerHeight<600;const dressing=stage==='dress';target=new THREE.Vector3(dressing&&innerWidth>500?2:0,3.6,compact?5.8:7);look=new THREE.Vector3(dressing&&innerWidth>500?2:0,compact?2.5:1.6,0);}else{const portrait=innerWidth<600;target=new THREE.Vector3(portrait?-.8:-1.25,2.05,portrait?5.4:4.4);look=new THREE.Vector3(portrait?-.8:-1.25,1.13,0);dog.position.set(2,0,-.5);player.rotation.y=previewAngle;owner.animate(elapsed,false);}camera.position.lerp(target,1-Math.exp(-dt*6));camera.lookAt(look);positionCatchTarget();if(stage==='dry')updateDryer();const wet=stage==='wash'?care.clean/100:stage==='dry'?1-care.dryness/100:0;if(!paused){puppy.animate(elapsed,{running:stage==='chase'||stage==='collect'||capture?.phase==='miss',wet,comfort:care.comfort,blowing:stage==='dry'&&activeZone!==null,knocking:dryerKnockTime>0});const airTarget=stage==='dry'&&activeZone!==null?dog.localToWorld(zonePoints[activeZone].clone()):null;careRoom.animate(elapsed,{blowing:!!airTarget,target:airTarget,knock:dryerKnockTime,washing:stage==='wash'});}if(stage==='wash'&&!paused&&!mathTask)for(const b of bubbles)if(b!==selectedBubble)positionBubble(b);renderer.render(scene,camera);}
 camera.position.set(innerWidth<600?-.8:-1.25,2.05,innerWidth<600?5.4:4.4);renderUI();loop();

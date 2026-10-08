@@ -35,6 +35,17 @@ function furTexture() {
   const texture = new THREE.CanvasTexture(canvas); texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
   texture.repeat.set(3,3); texture.colorSpace = THREE.SRGBColorSpace; return texture;
 }
+function mudTexture(){
+  const canvas=document.createElement('canvas');canvas.width=canvas.height=128;
+  const ctx=canvas.getContext('2d');
+  for(let i=0;i<90;i++){
+    const a=i*2.39996,r=8+(i%11)*3,x=64+Math.cos(a)*r,y=64+Math.sin(a)*r;
+    const gradient=ctx.createRadialGradient(x,y,0,x,y,8+(i%5));
+    gradient.addColorStop(0,i%2?'rgba(83,53,29,.8)':'rgba(137,93,48,.7)');gradient.addColorStop(1,'rgba(107,75,42,0)');
+    ctx.fillStyle=gradient;ctx.fillRect(x-14,y-14,28,28);
+  }
+  const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;return texture;
+}
 export function createPuppy() {
   const root = new THREE.Group(); root.name = 'Golden puppy';
   const fur = furTexture();
@@ -92,9 +103,13 @@ export function createPuppy() {
     transform.scale.set(.005,.01,.035);transform.rotation.z=a;transform.updateMatrix();tufts.setMatrixAt(i,transform.matrix);
   }
   tufts.castShadow=true;root.add(tufts);
+  const mud=mudTexture();
+  const mudMaterial=new THREE.MeshStandardMaterial({map:mud,transparent:true,depthWrite:false,roughness:1,alphaTest:.02,bumpMap:mud,bumpScale:.006});
   const dirt=[];
   for(let i=0;i<8;i++) {
-    const patch=oval(root,'#816447',[(i%2?1:-1)*.36,.88+(i%3)*.04,-.55+i*.15],[.024,.095,.135]);
+    const y=.88+(i%3)*.04,z=-.55+i*.15;
+    const x=.42*Math.sqrt(Math.max(.1,1-((z+.05)/.87)**2-((y-.8)/.46)**2))+.006;
+    const patch=oval(root,mudMaterial,[(i%2?1:-1)*x,y,z],[.013,.13,.18]);
     patch.rotation.z=(i%2?1:-1)*.2;dirt.push(patch);
   }
   const dryColor=new THREE.Color('#d7a463'),wetColor=new THREE.Color('#a78151');
@@ -194,6 +209,18 @@ export function createCareRoom() {
     add(root,geometry,surface);
     for(const source of geometries)source.dispose();
   }
+  // Dynamic water is added after static batching and only shown during washing.
+  const waterTank=new THREE.Group();waterTank.name='Wash water tank';root.add(waterTank);
+  const tankGlass=new THREE.MeshPhysicalMaterial({color:'#b8e8e6',transparent:true,opacity:.22,roughness:.15,metalness:0,depthWrite:false,side:THREE.DoubleSide});
+  rounded(waterTank,[3.3,.48,.045],tankGlass,[0,1.02,1.05],.02);
+  for(const x of [-1.63,1.63])rounded(waterTank,[.045,.48,2.1],tankGlass,[x,1.02,0],.02);
+  const waterMaterial=new THREE.MeshPhysicalMaterial({color:'#76c8d9',transparent:true,opacity:.42,roughness:.18,metalness:.08,depthWrite:false,side:THREE.DoubleSide});
+  const water=add(waterTank,new THREE.PlaneGeometry(3.22,2.05),waterMaterial,[0,.97,0]);water.rotation.x=-Math.PI/2;water.castShadow=false;
+  const ripples=[];
+  for(let i=0;i<4;i++){
+    const ripple=add(waterTank,new THREE.RingGeometry(.18,.19,40),new THREE.MeshBasicMaterial({color:'#e2fbff',transparent:true,opacity:.3,depthWrite:false,side:THREE.DoubleSide}),[(i%2?1:-1)*.9,.98,(i<2?1:-1)*.55]);
+    ripple.rotation.x=-Math.PI/2;ripple.castShadow=false;ripples.push(ripple);
+  }
   const dryer=new THREE.Group();root.add(dryer);
   rounded(dryer,[.42,.38,.68],coral,[0,0,0],.12);
   add(dryer,new THREE.CylinderGeometry(.12,.18,.34,16),material('#56666b'),[0,0,.43]).rotation.x=Math.PI/2;
@@ -205,7 +232,9 @@ export function createCareRoom() {
   air.visible=false;
   // This light only runs with the room; no additional shadow map is allocated.
   const warmLight=new THREE.PointLight('#ffe2bd',10,14,2);warmLight.position.set(-3,4,1);root.add(warmLight);
-  function animate(time, {blowing=false,target=null,knock=0}={}) {
+  function animate(time, {blowing=false,target=null,knock=0,washing=false}={}) {
+    waterTank.visible=washing;water.position.y=.97+Math.sin(time*.8)*.008;
+    ripples.forEach((r,i)=>{const p=(time*.16+i*.25)%1;r.scale.setScalar(.7+p*2);r.material.opacity=(1-p)*.25;});
     if(knock>0) {
       const progress=1-knock/1.2;
       dryer.position.set(.8+progress*2.2,1.5+Math.sin(progress*Math.PI)*1.2,.9-progress*2);
