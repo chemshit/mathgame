@@ -73,3 +73,11 @@ test('targeted washing rejects duplicate spots and rinse removes all foam before
  assert.equal(care.phase,'dry');assert.equal(care.dryness,40);assert.equal(care.towelDone,true);
  care.resetCurrentPhase();assert.equal(care.dryness,40);assert.equal(care.clean,100);
 });
+
+test('two towel taps complete each region; repeating a completed region does not affect others',()=>{
+ const care=new CareSession();for(let i=0;i<8;i++)care.washBubble(i);for(let i=0;i<8;i++)care.rinse(2,i);
+ assert.equal(care.towel(0,50),false);assert.equal(care.towelProgress[0],50);
+ care.towel(0,50);care.towel(0,50);assert.deepEqual(care.towelProgress,[100,0,0,0]);
+ for(let i=1;i<4;i++){care.towel(i,50);care.towel(i,50);}
+ assert.equal(care.phase,'dry');assert.deepEqual(care.wetness,[60,60,60,60]);
+});

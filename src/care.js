@@ -34,7 +34,7 @@ export class CareSession {
   }
   towel(zone,stroke) {
     if(this.phase!=='towel'||!Number.isInteger(zone)||zone<0||zone>=4||!(stroke>0))return false;
-    this.towelProgress[zone]=Math.min(100,this.towelProgress[zone]+Math.min(stroke,25));
+    this.towelProgress[zone]=Math.min(100,this.towelProgress[zone]+Math.min(stroke,50));
     if(this.towelProgress.some(value=>value<100))return false;
     this.towelDone=true;this.phase='dry';this.resetCurrentPhase();return true;
   }

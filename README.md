@@ -58,3 +58,5 @@ Yerel Web Audio sesleri: baloncuk, coin, cevap geri bildirimi, su, havlu ve baş
 
 ![Köpüklü yıkama](docs/foam-wash.png)
 ![Durulama](docs/rinse.png)
+
+Havlu aşamasında her tıklama/dokunma veya Enter/Space basışı bölgeyi %50 ilerletir: her bölge iki basışta tamamlanır. İleri geri sürükleme de daha kısa hareketlerle ilerler; sürüklemeyi bırakmak ayrıca bir tıklama olarak sayılmaz. Dört bölge tamamlanınca fön otomatik açılır.
