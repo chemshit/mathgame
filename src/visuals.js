@@ -232,10 +232,23 @@ export function createCareRoom() {
     const ripple=add(waterTank,new THREE.RingGeometry(.18,.19,40),new THREE.MeshBasicMaterial({color:'#e2fbff',transparent:true,opacity:.3,depthWrite:false,side:THREE.DoubleSide}),[(i%2?1:-1)*.9,.98,(i<2?1:-1)*.55]);
     ripple.rotation.x=-Math.PI/2;ripple.castShadow=false;ripples.push(ripple);
   }
-  const shower=new THREE.Group();root.add(shower);
-  const nozzle=rounded(shower,[.12,.07,.22],'#bdcccd',[0,0,0],.03);
+  const tapPosition=new THREE.Vector3(1.35,1.7,-.48);
+  const tapFlow=new THREE.Group();root.add(tapFlow);tapFlow.position.copy(tapPosition);
+  const flowingWater=new THREE.MeshBasicMaterial({color:'#55c7ec',transparent:true,opacity:.8,depthWrite:false});
+  const stream=add(tapFlow,new THREE.CylinderGeometry(.04,.055,.7,10),flowingWater,[0,-.35,0]);stream.castShadow=false;
+  const tapDrops=[];
+  for(let i=0;i<8;i++){const drop=oval(tapFlow,flowingWater,[0,0,0],[.018,.035,.018]);drop.castShadow=false;tapDrops.push(drop);}
+  tapFlow.visible=false;tapFlow.name='Running tap';
+  const shower=new THREE.Group();root.add(shower);shower.name='Movable shower head';
+  const nozzle=oval(shower,chrome,[0,0,0],[.16,.055,.12]);
+  oval(shower,'#667d86',[0,-.035,.035],[.135,.025,.1]);
+  const handle=rounded(shower,[.065,.3,.065],chrome,[.12,-.16,0],.025);handle.rotation.z=.4;
+  for(let i=0;i<9;i++)oval(shower,'#a6e6f6',[(i%3-1)*.055,-.058,.02+Math.floor(i/3)*.035],[.009,.009,.009]);
+  const spray=new THREE.Group();shower.add(spray);
   const droplets=[];
-  for(let i=0;i<12;i++){const drop=oval(shower,new THREE.MeshBasicMaterial({color:'#8bd9f0',transparent:true,opacity:.7}),[0,0,0],[.012,.045,.012]);drop.castShadow=false;droplets.push(drop);}
+  for(let i=0;i<18;i++){const drop=oval(spray,flowingWater,[0,0,0],[.012,.035,.012]);drop.castShadow=false;droplets.push(drop);}
+  const hoseGeometry=new THREE.BufferGeometry().setFromPoints(Array.from({length:25},()=>new THREE.Vector3()));
+  const hose=new THREE.Line(hoseGeometry,new THREE.LineBasicMaterial({color:'#879eaa'}));root.add(hose);
   const towel=rounded(root,[.48,.035,.32],'#fff2dc',[0,0,0],.02);
   shower.visible=false;towel.visible=false;
   const dryer=new THREE.Group();root.add(dryer);
@@ -249,9 +262,19 @@ export function createCareRoom() {
   air.visible=false;
   // This light only runs with the room; no additional shadow map is allocated.
   const warmLight=new THREE.PointLight('#ffe2bd',10,14,2);warmLight.position.set(-3,4,1);root.add(warmLight);
-  function animate(time, {blowing=false,target=null,knock=0,washing=false,rinseTarget=null,towelTarget=null}={}) {
-    shower.visible=!!rinseTarget;towel.visible=!!towelTarget;
-    if(rinseTarget){shower.position.copy(rinseTarget).add(new THREE.Vector3(.08,.45,.08));droplets.forEach((drop,i)=>{const p=(time*1.6+i/12)%1;drop.position.set(Math.sin(i*2.4)*.045,-p*.42,Math.cos(i*2.4)*.045);});}
+  function animate(time, {blowing=false,target=null,knock=0,washing=false,rinseTarget=null,towelTarget=null,rinsing=false,waterOn=false,headPosition=null,spraying=false}={}) {
+    shower.visible=rinsing;hose.visible=rinsing;towel.visible=!!towelTarget;
+    tapFlow.visible=rinsing&&waterOn;
+    tapDrops.forEach((drop,i)=>{const p=(time*1.8+i/8)%1;drop.position.set(Math.sin(i*2.4)*.055,-p*.7,Math.cos(i*2.4)*.04);});
+    spray.visible=rinsing&&waterOn&&spraying;
+    if(rinsing&&headPosition){
+      shower.position.copy(headPosition);
+      droplets.forEach((drop,i)=>{const p=(time*1.6+i/18)%1;drop.position.set(Math.sin(i*2.4)*(.055+p*.08),-.07-p*.55,Math.cos(i*2.4)*.05+.06);});
+      const end=headPosition.clone().add(new THREE.Vector3(.18,-.3,0));
+      const curve=new THREE.CatmullRomCurve3([new THREE.Vector3(1.6,1.1,-.8),new THREE.Vector3(1.9,.5,.4),end.clone().add(new THREE.Vector3(.2,-.5,0)),end]);
+      const attr=hoseGeometry.attributes.position;
+      for(let i=0;i<25;i++){const p=curve.getPoint(i/24);attr.setXYZ(i,p.x,p.y,p.z);}attr.needsUpdate=true;hoseGeometry.computeBoundingSphere();
+    }
     if(towelTarget){towel.position.copy(towelTarget).add(new THREE.Vector3(Math.sin(time*18)*.08,.05,.08));towel.rotation.set(.3,time*.2,.15);}
     waterTank.visible=washing;water.position.y=.97+Math.sin(time*.8)*.008;
     ripples.forEach((r,i)=>{const p=(time*.16+i*.25)%1;r.scale.setScalar(.7+p*2);r.material.opacity=(1-p)*.25;});
@@ -268,5 +291,5 @@ export function createCareRoom() {
     }
   }
   animate(0);
-  return {root,animate};
+  return {root,animate,tapPosition,stopWater(){tapFlow.visible=false;spray.visible=false;}};
 }

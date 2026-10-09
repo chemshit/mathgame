@@ -64,7 +64,7 @@ Yerel Web Audio sesleri: baloncuk, coin, cevap geri bildirimi, su, havlu ve baş
 Havlu aşamasında her tıklama/dokunma veya Enter/Space basışı bölgeyi %50 ilerletir: her bölge iki basışta tamamlanır. İleri geri sürükleme de daha kısa hareketlerle ilerler; sürüklemeyi bırakmak ayrıca bir tıklama olarak sayılmaz. Dört bölge tamamlanınca fön otomatik açılır.
 
 
-Durulamada yandaki musluk suyu açar/kapatır. Başlık fare/dokunmatik ile köpüğün üzerine sürüklenirken su akar; bırakma veya duraklatma durulamayı durdurur. Klavyede başlığı odaklayıp oklarla taşıyabilirsiniz. Köpeği çevirmek diğer köpüklü tarafı açar. Aşama değişince musluk kapanır.
+Durulamada açma/kapatma düğmesi 3B musluğun yanındadır; su açıldığı anda musluktan hazneye görünür akış başlar. Hortumlu 3B duş başlığı fare/dokunmatik ile taşınır; köpüğün üzerine sürüklenirken başlıktan su püskürür; bırakma durulamayı durdurur; musluk açık kalır. Duraklatma suyu kapatır. Klavyede başlığı odaklayıp oklarla taşıyabilirsiniz. Köpeği çevirmek diğer köpüklü tarafı açar. Aşama değişince musluk kapanır.
 
 Parkta üç yürünebilir tepe vardır; oyuncu, köpek ve coinler aynı zemin yüksekliğini kullanır. J ve ekrandaki Zıpla düğmesi serbest zıplama sağlar; yakalama sırasındaki zıplama ayrıca devam eder. Köpek daha değişken bir rotada koşar. Salıncak ve kaydırak kullanılabilir; yakınına gelince düğme çıkar. Basamak alanı park dekorudur. Salıncak direkleri, oturak ve kaydırak yürüyüş çarpışmalarına sahiptir.
 
@@ -72,10 +72,14 @@ Parkta üç yürünebilir tepe vardır; oyuncu, köpek ve coinler aynı zemin y�
 ![Park oyun alanı](docs/playground.png)
 
 
-Salıncağa/kaydırağa yaklaşınca kullanım düğmesi görünür; E veya düğme ile binilir. Salıncakta karakter oturup sallanır; E/İn ile güvenli tarafa iner. Kaydırakta otomatik merdiven çıkışı ve kayma sonrasında yürüyüşe dönülür; İn ile erken ayrılınabilir. Kullanırken normal yürüyüş/yakalama kapalıdır; duraklatma animasyonu da durdurur. Aynı etkileşimler para toplama park ziyaretinde kullanılabilir. Coinler bu nesnelerin içinde oluşturulmaz.
+Salıncağa/kaydırağa yaklaşınca kullanım düğmesi görünür; E veya düğme ile binilir. Salıncakta W/S, yukarı/aşağı okları veya ekranın ileri/geri düğmeleriyle itiş verilir; bırakınca hareket yavaşça söner; E/İn ile güvenli tarafa iner. Kaydırakta otomatik merdiven çıkışı ve kayma sonrasında yürüyüşe dönülür; İn ile erken ayrılınabilir. Kullanırken normal yürüyüş/yakalama kapalıdır; duraklatma animasyonu da durdurur. Aynı etkileşimler para toplama park ziyaretinde kullanılabilir. Coinler bu nesnelerin içinde oluşturulmaz.
 
 ![Salıncakta oynama](docs/swing.png)
 
 Saç modeli başın biçimini izleyen kesintisiz bir yüzey, hafif düzensiz saç çizgisi ve ince tutamlarla yenilendi. Omuz hizası saçta yan/ense hacmi, kıvırcıkta yüzeye oturan dalgalar, at kuyruğunda uca doğru daralan ve ayrı sallanan kuyruk vardır. Şapkayla üst detaylar gizlenir; tüm saç/renk seçenekleri korunur.
 
 ![Yenilenen saç modeli](docs/character-hair.png)
+
+Kaydırak merdivenli yüksek uçtan alçak çıkışa eğimlidir; basamaklar, üst platform ve oturarak kayma yolu aynı yöndedir.
+
+![Düzeltilmiş kaydırak](docs/slide.png)

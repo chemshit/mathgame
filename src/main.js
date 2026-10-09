@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import './style.css';
-import { groundHeight, ParkJump, dogDestination, nearbyRide, moveAroundObjects, blocked } from './park.js';
+import { groundHeight, ParkJump, SwingMotion, slidePosition, dogDestination, nearbyRide, moveAroundObjects, blocked } from './park.js';
 import { GameSound } from './sound.js';
 import { CaptureSequence } from './capture.js';
 import { MoneyQuestion, collectionQuestion } from './math.js';
@@ -68,9 +68,9 @@ Object.assign(texts.de,{timing:'Spring und fang!',timingHelp:'Klicke oder tippe 
 Object.assign(texts.tr,{washHelp:'Köpeği çevir, baloncukları işaretli kirli noktalara bırak.',rinse:'Durulama zamanı',rinseHelp:'Köpeği çevir. Köpüklü noktaları basılı tutarak suyla durula.',towel:'Havlu zamanı',towelHelp:'Her havluya iki kez bas veya ileri geri sil. Klavyede Enter kullan.',rinseProgress:'Durulama',towelProgress:'Havluyla kurulama',turnLeft:'Sola çevir',turnRight:'Sağa çevir',dirtySpot:'Kirli nokta',foamSpot:'Köpüklü nokta',targetDirt:'Baloncuğu işaretli kirli noktaya bırak.',soundOn:'Ses açık',soundOff:'Ses kapalı'});
 Object.assign(texts.en,{washHelp:'Turn the puppy and drop bubbles onto marked dirty spots.',rinse:'Rinse time',rinseHelp:'Turn the puppy. Hold each foamy spot to rinse it with water.',towel:'Towel time',towelHelp:'Tap each towel twice or rub back and forth. Use Enter with a keyboard.',rinseProgress:'Rinsing',towelProgress:'Towel drying',turnLeft:'Turn left',turnRight:'Turn right',dirtySpot:'Dirty spot',foamSpot:'Foamy spot',targetDirt:'Drop the bubble on a marked dirty spot.',soundOn:'Sound on',soundOff:'Sound off'});
 Object.assign(texts.de,{washHelp:'Drehe den Hund und ziehe Blasen auf markierte schmutzige Stellen.',rinse:'Zeit zum Abspülen',rinseHelp:'Drehe den Hund. Halte jede schaumige Stelle gedrückt, um sie abzuspülen.',towel:'Handtuchzeit',towelHelp:'Tippe jedes Handtuch zweimal an oder reibe hin und her. Mit der Tastatur: Enter.',rinseProgress:'Abspülen',towelProgress:'Abtrocknen',turnLeft:'Nach links drehen',turnRight:'Nach rechts drehen',dirtySpot:'Schmutzige Stelle',foamSpot:'Schaumige Stelle',targetDirt:'Ziehe die Blase auf eine markierte schmutzige Stelle.',soundOn:'Ton an',soundOff:'Ton aus'});
-Object.assign(texts.tr,{jump:'Zıpla',waterOn:'Suyu aç',waterOff:'Suyu kapat',showerHead:'Duş başlığı',rinseHelp:'Yandaki suyu aç. Duş başlığını tutup köpüklere sürükle; köpeği çevirebilirsin. Klavyede başlığı seç, oklarla taşı.',chaseHelp:'WASD / oklarla koş, J ile zıpla. Yaklaşınca Yakala. Tepeleri ve oyun alanını keşfet!'});
-Object.assign(texts.en,{jump:'Jump',waterOn:'Turn water on',waterOff:'Turn water off',showerHead:'Shower head',rinseHelp:'Turn on the water at the side. Drag the shower head onto foam; turn the puppy as needed. Select the head and use arrow keys with a keyboard.',chaseHelp:'Run with WASD / arrows, jump with J. Get close and Catch. Explore hills and the playground!'});
-Object.assign(texts.de,{jump:'Springen',waterOn:'Wasser öffnen',waterOff:'Wasser schliessen',showerHead:'Duschkopf',rinseHelp:'Öffne das Wasser an der Seite. Ziehe den Duschkopf auf den Schaum und drehe den Hund. Mit der Tastatur: Duschkopf auswählen und Pfeile verwenden.',chaseHelp:'Laufe mit WASD / Pfeilen, springe mit J. Geh näher und fange den Hund. Erkunde Hügel und Spielplatz!'});
+Object.assign(texts.tr,{swingHelp:'İleri / geri ile salla',jump:'Zıpla',waterOn:'Suyu aç',waterOff:'Suyu kapat',showerHead:'Duş başlığı',rinseHelp:'Yandaki suyu aç. Duş başlığını tutup köpüklere sürükle; köpeği çevirebilirsin. Klavyede başlığı seç, oklarla taşı.',chaseHelp:'WASD / oklarla koş, J ile zıpla. Yaklaşınca Yakala. Tepeleri ve oyun alanını keşfet!'});
+Object.assign(texts.en,{swingHelp:'Swing with forward / back',jump:'Jump',waterOn:'Turn water on',waterOff:'Turn water off',showerHead:'Shower head',rinseHelp:'Turn on the water at the side. Drag the shower head onto foam; turn the puppy as needed. Select the head and use arrow keys with a keyboard.',chaseHelp:'Run with WASD / arrows, jump with J. Get close and Catch. Explore hills and the playground!'});
+Object.assign(texts.de,{swingHelp:'Mit vor / zurück schaukeln',jump:'Springen',waterOn:'Wasser öffnen',waterOff:'Wasser schliessen',showerHead:'Duschkopf',rinseHelp:'Öffne das Wasser an der Seite. Ziehe den Duschkopf auf den Schaum und drehe den Hund. Mit der Tastatur: Duschkopf auswählen und Pfeile verwenden.',chaseHelp:'Laufe mit WASD / Pfeilen, springe mit J. Geh näher und fange den Hund. Erkunde Hügel und Spielplatz!'});
 Object.assign(texts.tr,{useSwing:'Salıncağa bin (E)',useSlide:'Kaydırağa çık (E)',leaveRide:'İn (E)'});
 Object.assign(texts.en,{useSwing:'Use swing (E)',useSlide:'Climb slide (E)',leaveRide:'Get off (E)'});
 Object.assign(texts.de,{useSwing:'Schaukeln (E)',useSlide:'Zur Rutsche (E)',leaveRide:'Absteigen (E)'});
@@ -99,9 +99,11 @@ box(4.6,.15,.15,'#79a9b2',playground,0,2.8,0);
 const swingPivot=new THREE.Group();swingPivot.position.set(0,2.8,0);playground.add(swingPivot);
 for(const x of [-.4,.4])box(.03,1.9,.03,'#a5aaa6',swingPivot,x,-.95,0);
 box(1,.12,.5,'#efb16c',swingPivot,0,-1.97,0);
-const slide=box(1.2,.1,3.2,'#dba391',playground,3.2,.85,1.4);slide.rotation.x=-.48;
-for(const x of [2.75,3.65])box(.08,1.6,.08,'#719b94',playground,x,.8,0);
-for(let i=0;i<5;i++)box(.8,.07,.16,'#8caeaa',playground,3.2,.25+i*.27,-.65);
+const slide=box(1.2,.1,3.2,'#dba391',playground,3.2,1.57,1.4);slide.rotation.x=.48;
+for(const x of [2.75,3.65])box(.08,2.3,.08,'#719b94',playground,x,1.15,0);
+for(let i=0;i<7;i++)box(.8,.07,.16,'#8caeaa',playground,3.2,.25+i*.3,-.95+i*.14);
+box(1.2,.1,.4,'#dba391',playground,3.2,2.29,-.16);
+for(const x of [2.7,3.7]){const rail=box(.06,.06,3.2,'#dba391',playground,x,1.74,1.4);rail.rotation.x=.48;}
 for(let i=0;i<4;i++)mesh(new THREE.CylinderGeometry(.55,.55,.1,20),i%2?'#7abbb0':'#edbd75',playground,-3+i*1.5,.12,3);
 for(let i=0;i<30;i++){const a=i/30*Math.PI*2,r=48+(i%3);const tree=new THREE.Group();tree.position.set(Math.sin(a)*r,0,Math.cos(a)*r);park.add(tree);mesh(new THREE.CylinderGeometry(.18,.3,2.5,8),'#99775b',tree,0,1.25,0);sphere(1.8,i%2?'#5d9e68':'#73b57b',tree,0,3.3,0);}
 for(let i=0;i<45;i++){const a=i*2.4,r=17+(i%15);sphere(.12,['#fff5ce','#f79caf','#b49de2'][i%3],park,Math.sin(a)*r,.12,Math.cos(a)*r);}
@@ -222,36 +224,42 @@ addEventListener('pointerdown',()=>sound.unlock(),{once:true});addEventListener(
 const soundButton=document.createElement('button');soundButton.id='sound-toggle';document.querySelector('header>div').append(soundButton);
 soundButton.onclick=()=>{sound.toggle();renderSound();};
 function renderSound(){soundButton.textContent=sound.muted?'🔇':'🔊';soundButton.setAttribute('aria-label',t(sound.muted?'soundOff':'soundOn'));soundButton.setAttribute('aria-pressed',String(!sound.muted));}
-let parkRide=null,rideTime=0;
+let parkRide=null,rideTime=0,swingMotion=new SwingMotion();
 const rideButton=document.createElement('button');rideButton.id='ride-button';document.querySelector('#controls').append(rideButton);rideButton.hidden=true;
 function leaveRide(){const previous=parkRide;parkRide=null;swingPivot.rotation.x=0;player.position.set(previous==='slide'?-14.8:-18,0,previous==='slide'?-18.8:-19);keys.clear();owner.animate(elapsed,false);}
-function useRide(){if(paused||!['chase','collect'].includes(stage))return;if(parkRide){leaveRide();return;}const choice=nearbyRide(player.position.x,player.position.z);if(!choice)return;parkRide=choice;rideTime=0;angle=0;parkJump.height=0;parkJump.velocity=0;keys.clear();}
+function useRide(){if(paused||!['chase','collect'].includes(stage))return;if(parkRide){leaveRide();return;}const choice=nearbyRide(player.position.x,player.position.z);if(!choice)return;parkRide=choice;rideTime=0;swingMotion=new SwingMotion();angle=0;parkJump.height=0;parkJump.velocity=0;keys.clear();}
 rideButton.onclick=useRide;
 rideButton.onkeydown=e=>{if(['Enter',' '].includes(e.key)){e.preventDefault();e.stopPropagation();if(!e.repeat)useRide();}};
 function updateRide(dt){rideTime+=dt;
- if(parkRide==='swing'){const theta=Math.sin(rideTime*2)*.45;swingPivot.rotation.x=theta;player.position.set(-18,2.8-1.92*Math.cos(theta)-.78,-17-1.92*Math.sin(theta));player.rotation.y=0;owner.animate(elapsed,false,'sit');}
- if(parkRide==='slide'){const climb=Math.min(1,rideTime/1.5),p=Math.max(0,Math.min(1,(rideTime-1.5)/1.4));player.position.set(-14.8,rideTime<1.5?climb*1.55:1.55*(1-p),rideTime<1.5?-17.65+climb*.85:-16.8+p*2.8);player.rotation.y=0;owner.animate(elapsed,false,rideTime<1.5?'jump':'sit');if(rideTime>3.1){parkRide=null;player.position.set(-14.8,0,-13.5);owner.animate(elapsed,false);}}
+ if(parkRide==='swing'){const push=(keys.has('w')||keys.has('arrowup')||keys.has('up')?1:0)-(keys.has('s')||keys.has('arrowdown')||keys.has('down')?1:0);swingMotion.tick(dt,push);const theta=-swingMotion.angle;swingPivot.rotation.x=theta;player.position.set(-18,2.8-1.92*Math.cos(theta)-.78,-17-1.92*Math.sin(theta));player.rotation.y=0;owner.animate(elapsed,false,'sit');}
+ if(parkRide==='slide'){const p=slidePosition(rideTime);player.position.set(p.x,p.y,p.z);player.rotation.y=0;owner.animate(elapsed,false,rideTime<1.5?'jump':'sit');if(rideTime>3.1){parkRide=null;player.position.set(-14.8,0,-13.5);owner.animate(elapsed,false);}}
 }
 const parkJump=new ParkJump();
 const jumpButton=document.createElement('button');jumpButton.id='jump-button';document.querySelector('#controls').append(jumpButton);
 jumpButton.onclick=()=>{if(!parkRide&&!paused&&['chase','collect'].includes(stage))parkJump.start();};
 jumpButton.onkeydown=e=>{if(['Enter',' '].includes(e.key)){e.preventDefault();e.stopPropagation();if(!e.repeat)jumpButton.click();}};
 const rinseControl=document.createElement('div');rinseControl.id='rinse-control';document.body.append(rinseControl);
+let showerPlaced=false;
 let waterOn=false,showerDragging=false,showerPoint={x:100,y:220};
 function renderRinseControl(){
- rinseControl.hidden=paused||stage!=='rinse';showerDragging=false;
- rinseControl.innerHTML=`<button id="water-tap" aria-pressed="${waterOn}">🚰 ${t(waterOn?'waterOff':'waterOn')}</button><button id="shower-handle" aria-label="${t('showerHead')}" title="${t('showerHead')}"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M31 37L23 22" fill="none" stroke="#77939e" stroke-width="8" stroke-linecap="round"/><ellipse cx="21" cy="17" rx="13" ry="7" transform="rotate(-30 21 17)" fill="#d6e2e5" stroke="#77939e" stroke-width="3"/><path d="M13 17l2 3m5-7l2 3m5-7l2 3" stroke="#58b4d2" stroke-width="2"/></svg></button>`;
+ rinseControl.hidden=paused||stage!=='rinse';showerDragging=false;showerPlaced=false;
+
+ rinseControl.innerHTML=`<button id="water-tap" aria-pressed="${waterOn}">${t(waterOn?'waterOff':'waterOn')}</button><button id="shower-handle" aria-label="${t('showerHead')}" title="${t('showerHead')}"></button>`;
  const handle=rinseControl.querySelector('#shower-handle');
  const position=()=>{handle.style.left=showerPoint.x+'px';handle.style.top=showerPoint.y+'px';};position();
- rinseControl.querySelector('#water-tap').onclick=()=>{waterOn=!waterOn;rinseControl.querySelector('#water-tap').textContent='🚰 '+t(waterOn?'waterOff':'waterOn');rinseControl.querySelector('#water-tap').setAttribute('aria-pressed',String(waterOn));};
- handle.onpointerdown=e=>{if(paused||mathTask)return;handle.setPointerCapture(e.pointerId);showerDragging=true;showerPoint={x:e.clientX,y:e.clientY};position();};
+ rinseControl.querySelector('#water-tap').onclick=()=>{waterOn=!waterOn;rinseControl.querySelector('#water-tap').textContent=t(waterOn?'waterOff':'waterOn');rinseControl.querySelector('#water-tap').setAttribute('aria-pressed',String(waterOn));};
+ handle.onpointerdown=e=>{if(paused||mathTask)return;handle.setPointerCapture(e.pointerId);showerPlaced=true;showerDragging=true;showerPoint={x:e.clientX,y:e.clientY};position();};
  handle.onpointermove=e=>{if(!showerDragging)return;showerPoint={x:e.clientX,y:e.clientY};position();};
  for(const event of ['pointerup','pointercancel','lostpointercapture'])handle.addEventListener(event,()=>{showerDragging=false;rinseZone=null;});
- handle.onkeydown=e=>{const moves={ArrowLeft:[-15,0],ArrowRight:[15,0],ArrowUp:[0,-15],ArrowDown:[0,15]};if(moves[e.key]){e.preventDefault();e.stopPropagation();const [x,y]=moves[e.key];showerPoint.x=Math.max(30,Math.min(innerWidth-30,showerPoint.x+x));showerPoint.y=Math.max(70,Math.min(innerHeight-30,showerPoint.y+y));showerDragging=true;position();}};
+ handle.onkeydown=e=>{const moves={ArrowLeft:[-15,0],ArrowRight:[15,0],ArrowUp:[0,-15],ArrowDown:[0,15]};if(moves[e.key]){e.preventDefault();e.stopPropagation();showerPlaced=true;const [x,y]=moves[e.key];showerPoint.x=Math.max(30,Math.min(innerWidth-30,showerPoint.x+x));showerPoint.y=Math.max(70,Math.min(innerHeight-30,showerPoint.y+y));showerDragging=true;position();}};
  handle.onblur=()=>{showerDragging=false;rinseZone=null;};
 }
 function updateShower(){
  rinseControl.classList.toggle('flowing',waterOn&&showerDragging&&!paused&&!mathTask);
+ const tap=rinseControl.querySelector('#water-tap');
+ const anchor=careRoom.tapPosition.clone().project(camera);
+ if(!showerPlaced&&!showerDragging){showerPoint={x:Math.max(45,Math.min(innerWidth-45,(anchor.x*.5+.5)*innerWidth+80)),y:Math.max(120,Math.min(innerHeight-45,(-anchor.y*.5+.5)*innerHeight+65))};const handle=rinseControl.querySelector('#shower-handle');if(handle){handle.style.left=showerPoint.x+'px';handle.style.top=showerPoint.y+'px';}}
+ if(tap){tap.style.left=Math.max(10,Math.min(innerWidth-tap.offsetWidth-10,(anchor.x*.5+.5)*innerWidth+18))+'px';tap.style.top=Math.max(100,Math.min(innerHeight-60,(-anchor.y*.5+.5)*innerHeight-15))+'px';}
  rinseZone=null;if(!waterOn||!showerDragging||paused||mathTask||stage!=='rinse')return;
  let best=48;
  for(let i=0;i<8;i++)if(care.foam[i]>0&&spotVisible(i)){const p=spotPosition(i),distance=Math.hypot(p.x-showerPoint.x,p.y-showerPoint.y);if(distance<best){best=distance;rinseZone=i;}}
@@ -325,7 +333,7 @@ function knockDryer(){
   stopDryer();economy.dryerPaid=false;care.resetCurrentPhase();misses++;
   dryerKnockTime=1.2;renderShop();updateCareHud();toast(t('dryerThrown'));
 }
-function stopDryer() { activeZone = null; rinseZone=null; waterOn=false; showerDragging=false; turningPointer=null; }
+function stopDryer() { careRoom.stopWater();activeZone = null; rinseZone=null; waterOn=false; showerDragging=false; turningPointer=null; }
 function renderDryer() {
   dryerLayer.innerHTML = '';
   zoneNames.forEach((name, i) => {
@@ -576,7 +584,7 @@ const clock=new THREE.Clock();function loop(){requestAnimationFrame(loop);const 
  player.position.x=movement.x;player.position.z=movement.z;
  if(player.position.length()>51)player.position.setLength(51);parkJump.tick(dt);player.position.y=groundHeight(player.position.x,player.position.z)+parkJump.height;owner.animate(elapsed,forward!==0,parkJump.height>0?'jump':null);
 }
-rideButton.hidden=!parkRide&&!nearbyRide(player.position.x,player.position.z);rideButton.textContent=t(parkRide?'leaveRide':nearbyRide(player.position.x,player.position.z)==='swing'?'useSwing':'useSlide');
+rideButton.hidden=!parkRide&&!nearbyRide(player.position.x,player.position.z);rideButton.textContent=(parkRide==='swing'?t('swingHelp')+' · '+t('leaveRide'):t(parkRide?'leaveRide':nearbyRide(player.position.x,player.position.z)==='swing'?'useSwing':'useSlide'));
 const route=dogDestination(elapsed);const dest=new THREE.Vector3(route.x,0,route.z);const dir=dest.sub(dog.position);dir.y=0;if(dir.length()>.2){dir.normalize();const dogMove=moveAroundObjects(dog.position.x,dog.position.z,dog.position.x+dir.x*dt*2,dog.position.z+dir.z*dt*2,0);dog.position.x=dogMove.x;dog.position.z=dogMove.z;dog.rotation.y=Math.atan2(dir.x,dir.z);}dog.position.y=groundHeight(dog.position.x,dog.position.z)+Math.sin(elapsed*14)*.035;action.disabled=parkRide?true:stage==='collect'?false:player.position.distanceTo(dog.position)>=3;}if(stage==='timing'&&capture)updateCapture(dt);if(stage==='wash'){if(bubbles.some(b=>economy.canPayAmount(b.price)))care.tickWash(dt*.45);updateCareHud();if(care.comfort<=0)escapeCare();}
 if(stage==='rinse')updateShower();
 if(stage==='rinse'&&rinseZone!==null){const done=care.rinse(dt,rinseZone);syncSoap();updateCareHud();if(elapsed-lastWaterSound>.5){sound.play('water');lastWaterSound=elapsed;}if(done){sound.play('happy');enterCare();}}
@@ -588,5 +596,6 @@ if(stage==='dry'){
   else updateCareHud();
 }
 }
-let target,look;if(stage==='chase'||stage==='timing'||stage==='collect'){target=player.position.clone().add(new THREE.Vector3(-Math.sin(angle)*6,4,-Math.cos(angle)*6));look=player.position.clone().add(new THREE.Vector3(Math.sin(angle)*3,1,Math.cos(angle)*3));}else if(['wash','rinse','towel','dry','dress','done'].includes(stage)){const compact=innerHeight<600;const dressing=stage==='dress';target=new THREE.Vector3(dressing&&innerWidth>500?2:0,3.6,compact?5.8:7);look=new THREE.Vector3(dressing&&innerWidth>500?2:0,compact?2.5:1.6,0);}else{const portrait=innerWidth<600;target=new THREE.Vector3(portrait?-.8:-1.25,2.05,portrait?5.4:4.4);look=new THREE.Vector3(portrait?-.8:-1.25,1.13,0);dog.position.set(2,0,-.5);player.rotation.y=previewAngle;owner.animate(elapsed,false);}camera.position.lerp(target,1-Math.exp(-dt*6));camera.lookAt(look);positionCatchTarget();updateSpots();if(stage==='dry')updateDryer();const wet=['wash','rinse','towel'].includes(stage)?1:stage==='dry'?1-care.dryness/100:0;if(!paused){puppy.animate(elapsed,{running:stage==='chase'||stage==='collect'||capture?.phase==='miss',wet,comfort:care.comfort,blowing:stage==='dry'&&activeZone!==null,knocking:dryerKnockTime>0,happiness:care.clean/100});const airTarget=stage==='dry'&&activeZone!==null?dog.localToWorld(zonePoints[activeZone].clone()):null;const rinseTarget=stage==='rinse'&&rinseZone!==null?dog.localToWorld(dirt[rinseZone].position.clone()):null;const towelTarget=stage==='towel'&&elapsed<towelVisualUntil?dog.localToWorld(zonePoints[towelVisualZone].clone()):null;careRoom.animate(elapsed,{blowing:!!airTarget,target:airTarget,knock:dryerKnockTime,washing:stage==='wash'||stage==='rinse',rinseTarget,towelTarget});}if(stage==='wash'&&!paused&&!mathTask)for(const b of bubbles)if(b!==selectedBubble)positionBubble(b);renderer.render(scene,camera);}
+let target,look;if(stage==='chase'||stage==='timing'||stage==='collect'){target=player.position.clone().add(new THREE.Vector3(-Math.sin(angle)*6,4,-Math.cos(angle)*6));look=player.position.clone().add(new THREE.Vector3(Math.sin(angle)*3,1,Math.cos(angle)*3));}else if(['wash','rinse','towel','dry','dress','done'].includes(stage)){const compact=innerHeight<600;const dressing=stage==='dress';target=new THREE.Vector3(dressing&&innerWidth>500?2:0,3.6,compact?5.8:7);look=new THREE.Vector3(dressing&&innerWidth>500?2:0,compact?2.5:1.6,0);}else{const portrait=innerWidth<600;target=new THREE.Vector3(portrait?-.8:-1.25,2.05,portrait?5.4:4.4);look=new THREE.Vector3(portrait?-.8:-1.25,1.13,0);dog.position.set(2,0,-.5);player.rotation.y=previewAngle;owner.animate(elapsed,false);}camera.position.lerp(target,1-Math.exp(-dt*6));camera.lookAt(look);positionCatchTarget();updateSpots();if(stage==='dry')updateDryer();const wet=['wash','rinse','towel'].includes(stage)?1:stage==='dry'?1-care.dryness/100:0;if(!paused){puppy.animate(elapsed,{running:stage==='chase'||stage==='collect'||capture?.phase==='miss',wet,comfort:care.comfort,blowing:stage==='dry'&&activeZone!==null,knocking:dryerKnockTime>0,happiness:care.clean/100});const airTarget=stage==='dry'&&activeZone!==null?dog.localToWorld(zonePoints[activeZone].clone()):null;const rinseTarget=stage==='rinse'&&rinseZone!==null?dog.localToWorld(dirt[rinseZone].position.clone()):null;const towelTarget=stage==='towel'&&elapsed<towelVisualUntil?dog.localToWorld(zonePoints[towelVisualZone].clone()):null;const headPosition=stage==='rinse'?new THREE.Vector3(showerPoint.x/innerWidth*2-1,1-showerPoint.y/innerHeight*2,0).unproject(camera):null;if(headPosition){const ray=headPosition.clone().sub(camera.position);headPosition.copy(camera.position).addScaledVector(ray,(1.35-camera.position.z)/ray.z);}
+careRoom.animate(elapsed,{rinsing:stage==='rinse',waterOn:stage==='rinse'&&waterOn&&!mathTask,headPosition,spraying:stage==='rinse'&&showerDragging,blowing:!!airTarget,target:airTarget,knock:dryerKnockTime,washing:stage==='wash'||stage==='rinse',rinseTarget,towelTarget});}if(stage==='wash'&&!paused&&!mathTask)for(const b of bubbles)if(b!==selectedBubble)positionBubble(b);renderer.render(scene,camera);}
 camera.position.set(innerWidth<600?-.8:-1.25,2.05,innerWidth<600?5.4:4.4);renderUI();loop();
