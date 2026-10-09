@@ -11,6 +11,7 @@ Son güncelleme: 9 Ekim 2026. Bu belge yeni sohbetler için kısa proje hafızas
 ## Tamamlananlar
 
 - Kız/erkek karakter; 4 saç modeli, 5 saç rengi, 4 ten/kıyafet rengi, şapkalar. Sürekli yüz geometrisi ve eklem hareketleri; modeller hâlâ prosedürel Three.js, Blender/GLB varlığı yok.
+- Saçlar başı izleyen kesintisiz yüzey ve ince tutamlarla yenilendi; doğal saç çizgisi, dalgalı kıvırcık, daralan/ayrı sallanan at kuyruğu ve şapka uyumu. Dört model/beş renk korunur.
 - 108 birim çaplı park, üç yürünebilir tepe, kullanılabilir salıncak/kaydırak ve küçük basamak dekorları, arkadan takip kamera, WASD/oklar ve ekran kontrolleri. J/düğmeyle serbest zıplama; oyuncu, köpek ve coinlerde ortak zemin yüksekliği. Köpek değişken bir rotada koşar. Yakalamada zıplama, havada hedef halkası, başarıda köpeği kucağa alma ve odaya geçiş; kaçırmada köpek uzaklaşır.
 - Salıncağa/kaydırağa yaklaşınca düğme veya E ile kullanım; oturma/sallanma, merdiven çıkışı/kayma, güvenli iniş. Nesnelerin içinden yürüyerek geçiş engellenir; aynı park ziyaretinde yakalama/coin akışı korunur.
 - Küçük su haznesi, yavaş uçuşan fiyatlı baloncuklar, dokulu kir. Köpek düğmelerle/yatay sürüklemeyle döndürülür; 8 kirli bölge ayrı temizlenir ve köpük birikir.
@@ -24,7 +25,7 @@ Son güncelleme: 9 Ekim 2026. Bu belge yeni sohbetler için kısa proje hafızas
 
 ## Doğrulama ve sınırlar
 
-Son uygulama düzeltmesinde **22 Node testi ve Vite derlemesi geçti**. Son kontrolde yaklaşınca kullanım düğmesi, nesne çarpışmaları, salıncakta binme/sallanma/inme/duraklatma ve telefon boyutunda kaydıraktan çıkıp kayma Chromium'da doğrulandı. Önceki kontrolde duş sürükleme ve serbest zıplama doğrulandı. Havlu tıklama/dokunma/klavye/sürükleme önceki düzeltmede doğrulandı. Önceki kapsamlı bakım kontrolünde 8 fiyatlı hedefli baloncuk, sorular, durulama ve havlu sırası doğrulandı; uzun durulama kontrolünün bazı bölgeleri yalnızca testte köpük miktarı azaltılarak hızlandırıldı.
+Son uygulama düzeltmesinde **22 Node testi ve Vite derlemesi geçti**. Son saç kontrolünde dört model, renk/şapka değişimleri ve telefon ekran boyutu Chromium’da doğrulandı; tarayıcı hatası görülmedi. Önceki park kontrolünde yaklaşınca kullanım düğmesi, nesne çarpışmaları, salıncakta binme/sallanma/inme/duraklatma ve telefon boyutunda kaydıraktan çıkıp kayma Chromium'da doğrulandı. Önceki kontrolde duş sürükleme ve serbest zıplama doğrulandı. Havlu tıklama/dokunma/klavye/sürükleme önceki düzeltmede doğrulandı. Önceki kapsamlı bakım kontrolünde 8 fiyatlı hedefli baloncuk, sorular, durulama ve havlu sırası doğrulandı; uzun durulama kontrolünün bazı bölgeleri yalnızca testte köpük miktarı azaltılarak hızlandırıldı.
 
 Tarayıcı kontrolleri masaüstü Chromium ve telefon ekran boyutuyla yapıldı; gerçek cihaz performansı ve çocuklarla kullanım denemesi yapılmadı. Derlemede >500 kB JS paket uyarısı var; derleme başarısızlığı değil. Oyun için herkese açık kalıcı bir site veya App Store yayını bu çalışmada kurulmadı. `docs/` görselleri örnektir; her son değişikliği göstermeyebilir.
 

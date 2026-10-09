@@ -106,48 +106,80 @@ export function createCharacter() {
   }
   // Build all variants once; selection changes visibility and material colors only.
   const hairGroups={};
+  // A continuous scalp follows the head instead of leaving gaps between separate fringes.
+  function hairPoint(phi,t,style,offset=0) {
+    const front=Math.max(0,Math.cos(phi));
+    const back=Math.max(0,-Math.cos(phi));
+    const side=Math.abs(Math.sin(phi));
+    let edge=-.065+.215*front-.16*back;
+    if(style==='bob')edge-=.23*(1-front**4);
+    // A swept, irregular hairline; the eyes and eyebrows remain uncovered.
+    edge+=front**5*(.014*Math.sin(phi*7)-.025*Math.sin(phi+ .5));
+    const end=Math.acos(THREE.MathUtils.clamp((edge-.015)/.335,-1,1));
+    const theta=t*end;
+    const ripple=(style==='curls'?.012*Math.sin(phi*14+theta*18):.0025*Math.sin(phi*25+theta*5))*Math.sin(theta);
+    const bobWidth=style==='bob'?1+.15*side*t*t:1;
+    return new THREE.Vector3(
+      Math.sin(theta)*Math.sin(phi)*(.252+ripple+offset)*bobWidth,
+      .015+Math.cos(theta)*(.335+offset),
+      -.018+Math.sin(theta)*Math.cos(phi)*(.245+ripple+offset)
+    );
+  }
   for(const style of ['short','bob','ponytail','curls']) {
     const group=new THREE.Group();head.add(group);hairGroups[style]=group;
-    const cap=part(group,new THREE.SphereGeometry(1,24,16,0,Math.PI*2,0,Math.PI*.42),surfaces.hair,[0,.02,-.02],[.252,.332,.24]);
-    cap.userData.crown=true;
-    for(let i=0;i<7;i++){
-      const x=(i-3)*.047;
-      const curve=new THREE.CatmullRomCurve3([new THREE.Vector3(x*.65,.30,.10),new THREE.Vector3(x-.02,.245,.19),new THREE.Vector3(x+.035,.16+Math.abs(i-3)*.012,.222)]);
-      const fringeGeometry=new THREE.TubeGeometry(curve,16,.018,6,false);
-      const vertices=fringeGeometry.attributes.position;
-      for(let segment=0;segment<=16;segment++){
-        const t=segment/16,center=curve.getPointAt(t),taper=1-t*.8;
-        for(let j=0;j<=6;j++){
-          const index=segment*7+j;
-          vertices.setXYZ(index,center.x+(vertices.getX(index)-center.x)*taper,center.y+(vertices.getY(index)-center.y)*taper,center.z+(vertices.getZ(index)-center.z)*taper*.35);
-        }
-      }
-      fringeGeometry.computeVertexNormals();
-      const fringe=part(group,fringeGeometry,surfaces.hair,[0,0,0]);fringe.userData.crown=true;
+    group.name=`Hair: ${style}`;
+    const geometry=new THREE.SphereGeometry(1,64,32);
+    const vertices=geometry.attributes.position,uv=geometry.attributes.uv;
+    for(let i=0;i<vertices.count;i++) {
+      const phi=uv.getX(i)*Math.PI*2,t=1-uv.getY(i);
+      const point=hairPoint(phi,t,style);
+      vertices.setXYZ(i,point.x,point.y,point.z);
     }
-    for(let i=0;i<12;i++){
-      const a=i/12*Math.PI*2;
-      const curve=new THREE.CatmullRomCurve3([new THREE.Vector3(Math.sin(a)*.045,.348,Math.cos(a)*.045-.02),new THREE.Vector3(Math.sin(a)*.17,.26,Math.cos(a)*.17-.02),new THREE.Vector3(Math.sin(a)*.247,.115,Math.cos(a)*.237-.02)]);
-      const strand=part(group,new THREE.TubeGeometry(curve,16,.003,4,false),surfaces.hair,[0,0,0]);strand.userData.crown=true;
-    }
-    oval(group,surfaces.hair,[0,.05,-.185],[.235,.26,.075]);
-    if(style==='bob'||style==='ponytail') {
-      for(const side of [-1,1])oval(group,surfaces.hair,[side*.235,-.055,-.07],[.058,.235,.155]);
-      oval(group,surfaces.hair,[0,-.08,-.195],[.23,.255,.07]);
-      for(const side of [-1,1])for(let i=0;i<5;i++){
-        const z=-.12+i*.04;
-        const curve=new THREE.CatmullRomCurve3([new THREE.Vector3(side*.218,.15,z),new THREE.Vector3(side*.28,-.055,z-.01),new THREE.Vector3(side*.235,-.275,z-.03)]);
-        part(group,new THREE.TubeGeometry(curve,18,.003,4,false),surfaces.hair,[0,0,0]);
+    geometry.computeVertexNormals();
+    const scalp=part(group,geometry,surfaces.hair,[0,0,0]);
+    // Hats keep the low sides/nape, while hiding hair above their rim.
+    scalp.userData.scalp=true;
+    for(let i=0;i<18;i++) {
+      const phi=i/18*Math.PI*2;
+      const points=[];
+      for(let j=0;j<=20;j++) {
+        const t=.12+j/20*.86;
+        points.push(hairPoint(phi+.12*(1-t),t,style,.0015));
       }
+      const strand=part(group,new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points),24,.0012,4,false),surfaces.hair,[0,0,0]);
+      strand.userData.crown=true;
     }
     if(style==='ponytail') {
-      const tail=oval(group,surfaces.hair,[0,-.12,-.35],[.105,.3,.13]);tail.rotation.x=.3;
-      oval(group,'#db8d86',[0,.095,-.28],[.12,.06,.06]);
+      const tailGroup=new THREE.Group();tailGroup.position.set(0,.055,-.245);group.add(tailGroup);
+      tailGroup.name='Ponytail';
+      const curve=new THREE.CatmullRomCurve3([
+        new THREE.Vector3(0,0,0),new THREE.Vector3(0,-.06,-.12),
+        new THREE.Vector3(.015,-.25,-.15),new THREE.Vector3(.025,-.43,-.11)
+      ]);
+      const tailGeometry=new THREE.TubeGeometry(curve,32,.085,12,false);
+      const pos=tailGeometry.attributes.position;
+      for(let j=0;j<=32;j++) {
+        const t=j/32,center=curve.getPointAt(t),width=.75+.3*Math.sin(t*Math.PI)-.65*t**3;
+        for(let k=0;k<=12;k++) {
+          const index=j*13+k;
+          pos.setXYZ(index,center.x+(pos.getX(index)-center.x)*width,center.y+(pos.getY(index)-center.y)*width,center.z+(pos.getZ(index)-center.z)*width);
+        }
+      }
+      tailGeometry.computeVertexNormals();part(tailGroup,tailGeometry,surfaces.hair,[0,0,0]);
+      const tie=part(tailGroup,new THREE.TorusGeometry(.064,.012,8,24),'#db8d86',[0,-.018,-.045]);tie.rotation.x=.5;
+      group.userData.tail=tailGroup;
     }
-    if(style==='curls')for(let i=0;i<20;i++) {
-      const a=i*2.4;const curl=oval(group,surfaces.hair,[Math.cos(a)*.235,.1+(i%3)*.095,Math.sin(a)*.22],[.075,.065,.075]);curl.userData.crown=true;
+    if(style==='curls')for(let i=0;i<22;i++) {
+      const phi=i/22*Math.PI*2,points=[];
+      for(let j=0;j<=20;j++) {
+        const t=.18+j/20*.78;
+        points.push(hairPoint(phi+.06*Math.sin(t*24),t,style,.002));
+      }
+      const curl=part(group,new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points),32,.005,5,false),surfaces.hair,[0,0,0]);
+      curl.userData.crown=true;
     }
   }
+
   const hats={};
   for(const name of ['cap','sunhat','beanie']){const group=new THREE.Group();head.add(group);hats[name]=group;}
   part(hats.cap,new THREE.SphereGeometry(1,24,12,0,Math.PI*2,0,Math.PI/2),'#577f9b',[0,.14,-.01],[.31,.345,.29]);
@@ -167,7 +199,7 @@ export function createCharacter() {
   function configure(next){
     appearance={...next};
     surfaces.skin.color.set(SKIN_COLORS[next.skin]);surfaces.hair.color.set(HAIR_COLORS[next.hairColor]);surfaces.shirt.color.set(OUTFIT_COLORS[next.outfit]);
-    for(const [name,group]of Object.entries(hairGroups)){group.visible=name===next.hairStyle;group.traverse(mesh=>{if(mesh.userData.crown)mesh.visible=next.hat==='none';});}
+    for(const [name,group]of Object.entries(hairGroups)){group.visible=name===next.hairStyle;group.traverse(mesh=>{if(mesh.userData.crown)mesh.visible=next.hat==='none';if(mesh.userData.scalp){mesh.scale.set(1,next.hat==='none'?1:.88,1);mesh.position.y=next.hat==='none'?0:-.035;}});}
     for(const [name,group]of Object.entries(hats))group.visible=name===next.hat;
     girlDetails.visible=next.gender==='girl';boyDetails.visible=next.gender==='boy';
     head.scale.set(next.gender==='girl'?.705:.72,.72,.72);
@@ -187,7 +219,7 @@ export function createCharacter() {
     rig.rotation.y=running?Math.sin(time*10)*.045:0;
     rig.rotation.x=running?.055:0;
     head.rotation.z=running?Math.sin(time*10)*.012:Math.sin(time*.9)*.015;
-    hairGroups.ponytail.rotation.x=running?Math.sin(time*10)*.07:Math.sin(time*2)*.012;
+    hairGroups.ponytail.userData.tail.rotation.x=running?Math.sin(time*10)*.09:Math.sin(time*2)*.018;
   }
   return {root,configure,animate};
 }

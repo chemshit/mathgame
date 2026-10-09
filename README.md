@@ -75,3 +75,7 @@ Parkta üç yürünebilir tepe vardır; oyuncu, köpek ve coinler aynı zemin y�
 Salıncağa/kaydırağa yaklaşınca kullanım düğmesi görünür; E veya düğme ile binilir. Salıncakta karakter oturup sallanır; E/İn ile güvenli tarafa iner. Kaydırakta otomatik merdiven çıkışı ve kayma sonrasında yürüyüşe dönülür; İn ile erken ayrılınabilir. Kullanırken normal yürüyüş/yakalama kapalıdır; duraklatma animasyonu da durdurur. Aynı etkileşimler para toplama park ziyaretinde kullanılabilir. Coinler bu nesnelerin içinde oluşturulmaz.
 
 ![Salıncakta oynama](docs/swing.png)
+
+Saç modeli başın biçimini izleyen kesintisiz bir yüzey, hafif düzensiz saç çizgisi ve ince tutamlarla yenilendi. Omuz hizası saçta yan/ense hacmi, kıvırcıkta yüzeye oturan dalgalar, at kuyruğunda uca doğru daralan ve ayrı sallanan kuyruk vardır. Şapkayla üst detaylar gizlenir; tüm saç/renk seçenekleri korunur.
+
+![Yenilenen saç modeli](docs/character-hair.png)
