@@ -66,7 +66,12 @@ Havlu aşamasında her tıklama/dokunma veya Enter/Space basışı bölgeyi %50 
 
 Durulamada yandaki musluk suyu açar/kapatır. Başlık fare/dokunmatik ile köpüğün üzerine sürüklenirken su akar; bırakma veya duraklatma durulamayı durdurur. Klavyede başlığı odaklayıp oklarla taşıyabilirsiniz. Köpeği çevirmek diğer köpüklü tarafı açar. Aşama değişince musluk kapanır.
 
-Parkta üç yürünebilir tepe vardır; oyuncu, köpek ve coinler aynı zemin yüksekliğini kullanır. J ve ekrandaki Zıpla düğmesi serbest zıplama sağlar; yakalama sırasındaki zıplama ayrıca devam eder. Köpek daha değişken bir rotada koşar. Küçük salıncak, kaydırak ve basamak alanı park dekorlarıdır; ayrı mini oyun/fizik etkileşimleri henüz yoktur.
+Parkta üç yürünebilir tepe vardır; oyuncu, köpek ve coinler aynı zemin yüksekliğini kullanır. J ve ekrandaki Zıpla düğmesi serbest zıplama sağlar; yakalama sırasındaki zıplama ayrıca devam eder. Köpek daha değişken bir rotada koşar. Salıncak ve kaydırak kullanılabilir; yakınına gelince düğme çıkar. Basamak alanı park dekorudur. Salıncak direkleri, oturak ve kaydırak yürüyüş çarpışmalarına sahiptir.
 
 ![Sürüklenebilir duş](docs/shower.png)
 ![Park oyun alanı](docs/playground.png)
+
+
+Salıncağa/kaydırağa yaklaşınca kullanım düğmesi görünür; E veya düğme ile binilir. Salıncakta karakter oturup sallanır; E/İn ile güvenli tarafa iner. Kaydırakta otomatik merdiven çıkışı ve kayma sonrasında yürüyüşe dönülür; İn ile erken ayrılınabilir. Kullanırken normal yürüyüş/yakalama kapalıdır; duraklatma animasyonu da durdurur. Aynı etkileşimler para toplama park ziyaretinde kullanılabilir. Coinler bu nesnelerin içinde oluşturulmaz.
+
+![Salıncakta oynama](docs/swing.png)

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import './style.css';
-import { groundHeight, ParkJump, dogDestination } from './park.js';
+import { groundHeight, ParkJump, dogDestination, nearbyRide, moveAroundObjects, blocked } from './park.js';
 import { GameSound } from './sound.js';
 import { CaptureSequence } from './capture.js';
 import { MoneyQuestion, collectionQuestion } from './math.js';
@@ -71,6 +71,9 @@ Object.assign(texts.de,{washHelp:'Drehe den Hund und ziehe Blasen auf markierte 
 Object.assign(texts.tr,{jump:'Zıpla',waterOn:'Suyu aç',waterOff:'Suyu kapat',showerHead:'Duş başlığı',rinseHelp:'Yandaki suyu aç. Duş başlığını tutup köpüklere sürükle; köpeği çevirebilirsin. Klavyede başlığı seç, oklarla taşı.',chaseHelp:'WASD / oklarla koş, J ile zıpla. Yaklaşınca Yakala. Tepeleri ve oyun alanını keşfet!'});
 Object.assign(texts.en,{jump:'Jump',waterOn:'Turn water on',waterOff:'Turn water off',showerHead:'Shower head',rinseHelp:'Turn on the water at the side. Drag the shower head onto foam; turn the puppy as needed. Select the head and use arrow keys with a keyboard.',chaseHelp:'Run with WASD / arrows, jump with J. Get close and Catch. Explore hills and the playground!'});
 Object.assign(texts.de,{jump:'Springen',waterOn:'Wasser öffnen',waterOff:'Wasser schliessen',showerHead:'Duschkopf',rinseHelp:'Öffne das Wasser an der Seite. Ziehe den Duschkopf auf den Schaum und drehe den Hund. Mit der Tastatur: Duschkopf auswählen und Pfeile verwenden.',chaseHelp:'Laufe mit WASD / Pfeilen, springe mit J. Geh näher und fange den Hund. Erkunde Hügel und Spielplatz!'});
+Object.assign(texts.tr,{useSwing:'Salıncağa bin (E)',useSlide:'Kaydırağa çık (E)',leaveRide:'İn (E)'});
+Object.assign(texts.en,{useSwing:'Use swing (E)',useSlide:'Climb slide (E)',leaveRide:'Get off (E)'});
+Object.assign(texts.de,{useSwing:'Schaukeln (E)',useSlide:'Zur Rutsche (E)',leaveRide:'Absteigen (E)'});
 const t=k=>texts[lang][k];
 const app=document.querySelector('#app');
 app.innerHTML=`<canvas id="world"></canvas><header><strong>🐾 World Pet Wash <small>PROTOTYPE · 06</small></strong><div><div id="wallet"></div><select id="language" aria-label="Language"><option value="tr">Türkçe</option><option value="en">English</option><option value="de">Deutsch</option></select><button id="pause">Ⅱ</button></div></header><div id="panel"></div><div id="hud"></div><div id="controls"><div id="pad"><button data-dir="up">▲</button><div><button data-dir="left">◀</button><button data-dir="down">▼</button><button data-dir="right">▶</button></div></div><button id="action"></button></div><div id="toast" role="status"></div><div id="bubble-layer"></div><div id="dryer-layer"></div><div id="wardrobe"></div><div id="shop"></div><footer>World Pet Wash · browser prototype</footer>`;
@@ -93,10 +96,12 @@ const playground=new THREE.Group();playground.position.set(-18,0,-17);park.add(p
 mesh(new THREE.CylinderGeometry(6,6,.04,40),'#e4cba5',playground,0,.04,0);
 for(const x of [-2,2])for(const z of [-.8,.8]){const post=box(.12,2.8,.12,'#79a9b2',playground,x,1.4,z);post.rotation.z=x<0?-.13:.13;}
 box(4.6,.15,.15,'#79a9b2',playground,0,2.8,0);
-for(const x of [-.4,.4])box(.03,1.9,.03,'#a5aaa6',playground,x,1.8,0);
-box(1,.12,.5,'#efb16c',playground,0,.83,0);
+const swingPivot=new THREE.Group();swingPivot.position.set(0,2.8,0);playground.add(swingPivot);
+for(const x of [-.4,.4])box(.03,1.9,.03,'#a5aaa6',swingPivot,x,-.95,0);
+box(1,.12,.5,'#efb16c',swingPivot,0,-1.97,0);
 const slide=box(1.2,.1,3.2,'#dba391',playground,3.2,.85,1.4);slide.rotation.x=-.48;
 for(const x of [2.75,3.65])box(.08,1.6,.08,'#719b94',playground,x,.8,0);
+for(let i=0;i<5;i++)box(.8,.07,.16,'#8caeaa',playground,3.2,.25+i*.27,-.65);
 for(let i=0;i<4;i++)mesh(new THREE.CylinderGeometry(.55,.55,.1,20),i%2?'#7abbb0':'#edbd75',playground,-3+i*1.5,.12,3);
 for(let i=0;i<30;i++){const a=i/30*Math.PI*2,r=48+(i%3);const tree=new THREE.Group();tree.position.set(Math.sin(a)*r,0,Math.cos(a)*r);park.add(tree);mesh(new THREE.CylinderGeometry(.18,.3,2.5,8),'#99775b',tree,0,1.25,0);sphere(1.8,i%2?'#5d9e68':'#73b57b',tree,0,3.3,0);}
 for(let i=0;i<45;i++){const a=i*2.4,r=17+(i%15);sphere(.12,['#fff5ce','#f79caf','#b49de2'][i%3],park,Math.sin(a)*r,.12,Math.cos(a)*r);}
@@ -125,6 +130,7 @@ function spawnCoins(reset=false) {
     const backLabel=new THREE.Mesh(label.geometry,coinLabels.get(value));backLabel.rotation.y=Math.PI;backLabel.position.z=-.045;group.add(backLabel);
     if(i<12)group.position.set(i%2===0?0:2, .65, 1.5+i*1.6);
     else {const angle=i*2.4,radius=12+(i%6)*6;group.position.set(Math.sin(angle)*radius,.65,Math.cos(angle)*radius);}
+    if(blocked(group.position.x,group.position.z))group.position.z-=3;
     group.position.y=groundHeight(group.position.x,group.position.z)+.65;
     coinItems.push({id:`${coinBatch}:${i}`,value,group});
   }
@@ -216,9 +222,19 @@ addEventListener('pointerdown',()=>sound.unlock(),{once:true});addEventListener(
 const soundButton=document.createElement('button');soundButton.id='sound-toggle';document.querySelector('header>div').append(soundButton);
 soundButton.onclick=()=>{sound.toggle();renderSound();};
 function renderSound(){soundButton.textContent=sound.muted?'🔇':'🔊';soundButton.setAttribute('aria-label',t(sound.muted?'soundOff':'soundOn'));soundButton.setAttribute('aria-pressed',String(!sound.muted));}
+let parkRide=null,rideTime=0;
+const rideButton=document.createElement('button');rideButton.id='ride-button';document.querySelector('#controls').append(rideButton);rideButton.hidden=true;
+function leaveRide(){const previous=parkRide;parkRide=null;swingPivot.rotation.x=0;player.position.set(previous==='slide'?-14.8:-18,0,previous==='slide'?-18.8:-19);keys.clear();owner.animate(elapsed,false);}
+function useRide(){if(paused||!['chase','collect'].includes(stage))return;if(parkRide){leaveRide();return;}const choice=nearbyRide(player.position.x,player.position.z);if(!choice)return;parkRide=choice;rideTime=0;angle=0;parkJump.height=0;parkJump.velocity=0;keys.clear();}
+rideButton.onclick=useRide;
+rideButton.onkeydown=e=>{if(['Enter',' '].includes(e.key)){e.preventDefault();e.stopPropagation();if(!e.repeat)useRide();}};
+function updateRide(dt){rideTime+=dt;
+ if(parkRide==='swing'){const theta=Math.sin(rideTime*2)*.45;swingPivot.rotation.x=theta;player.position.set(-18,2.8-1.92*Math.cos(theta)-.78,-17-1.92*Math.sin(theta));player.rotation.y=0;owner.animate(elapsed,false,'sit');}
+ if(parkRide==='slide'){const climb=Math.min(1,rideTime/1.5),p=Math.max(0,Math.min(1,(rideTime-1.5)/1.4));player.position.set(-14.8,rideTime<1.5?climb*1.55:1.55*(1-p),rideTime<1.5?-17.65+climb*.85:-16.8+p*2.8);player.rotation.y=0;owner.animate(elapsed,false,rideTime<1.5?'jump':'sit');if(rideTime>3.1){parkRide=null;player.position.set(-14.8,0,-13.5);owner.animate(elapsed,false);}}
+}
 const parkJump=new ParkJump();
 const jumpButton=document.createElement('button');jumpButton.id='jump-button';document.querySelector('#controls').append(jumpButton);
-jumpButton.onclick=()=>{if(!paused&&['chase','collect'].includes(stage))parkJump.start();};
+jumpButton.onclick=()=>{if(!parkRide&&!paused&&['chase','collect'].includes(stage))parkJump.start();};
 jumpButton.onkeydown=e=>{if(['Enter',' '].includes(e.key)){e.preventDefault();e.stopPropagation();if(!e.repeat)jumpButton.click();}};
 const rinseControl=document.createElement('div');rinseControl.id='rinse-control';document.body.append(rinseControl);
 let waterOn=false,showerDragging=false,showerPoint={x:100,y:220};
@@ -302,7 +318,7 @@ function renderShop(){
   };
 }
 function enterCollection(){
-  parkJump.height=0;parkJump.velocity=0;stopDryer();clearBubbles();keys.clear();stage='collect';park.visible=true;clinic.visible=false;player.visible=true;player.position.set(0,0,0);dog.position.set(0,0,5);angle=0;player.rotation.y=0;setParkView();renderUI();
+  if(parkRide)leaveRide();parkJump.height=0;parkJump.velocity=0;stopDryer();clearBubbles();keys.clear();stage='collect';park.visible=true;clinic.visible=false;player.visible=true;player.position.set(0,0,0);dog.position.set(0,0,5);angle=0;player.rotation.y=0;setParkView();renderUI();
 }
 let dryerKnockTime=0;
 function knockDryer(){
@@ -451,7 +467,7 @@ function enterCare() {
   if (stage === 'wash') for (let i = 0; i < 5; i++) addBubble();
 }
 function resize(){renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();}addEventListener('resize',resize);resize();
-const keys=new Set();addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();if(mathDialog.open||e.target.matches('input,select'))return;keys.add(e.key.toLowerCase());if(e.code==='KeyJ'&&!e.repeat&&['chase','collect'].includes(stage))parkJump.start();if(e.code==='Space'&&!e.repeat)act();});addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));addEventListener('blur',()=>{keys.clear();stopDryer();if(stage!=='create'&&stage!=='done'){if(mathTask)closeMath();paused=true;renderUI();}});
+const keys=new Set();addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();if(mathDialog.open||e.target.matches('input,select'))return;keys.add(e.key.toLowerCase());if(e.code==='KeyE'&&!e.repeat)useRide();if(e.code==='KeyJ'&&!parkRide&&!e.repeat&&['chase','collect'].includes(stage))parkJump.start();if(e.code==='Space'&&!e.repeat)act();});addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));addEventListener('blur',()=>{keys.clear();stopDryer();if(stage!=='create'&&stage!=='done'){if(mathTask)closeMath();paused=true;renderUI();}});
 for(const btn of document.querySelectorAll('[data-dir]')){btn.addEventListener('pointerdown',e=>{btn.setPointerCapture(e.pointerId);keys.add(btn.dataset.dir);});for(const ev of ['pointerup','pointercancel','lostpointercapture'])btn.addEventListener(ev,()=>keys.delete(btn.dataset.dir));}
 function toast(message){const el=document.querySelector('#toast');el.textContent=message;clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.textContent='',4500);}
 let best=0;try{best=Number(localStorage.getItem('wpw-best'))||0;}catch{}
@@ -472,7 +488,7 @@ renderer.domElement.addEventListener('pointerdown',e=>{if(['wash','rinse','towel
 renderer.domElement.addEventListener('pointermove',e=>{if(turningPointer===null||paused||mathTask)return;dog.rotation.y+=(e.clientX-turningPointer)*.008;turningPointer=e.clientX;});
 for(const event of ['pointerup','pointercancel','lostpointercapture'])renderer.domElement.addEventListener(event,()=>turningPointer=null);
 function setParkView(){camera.position.set(0,4,-6);camera.lookAt(0,1,3);}
-function enterChase(){parkJump.height=0;parkJump.velocity=0;stage='chase';paused=false;park.visible=true;clinic.visible=false;player.visible=true;player.position.set(0,0,0);dog.position.set(0,0,5);angle=0;player.rotation.y=0;setParkView();for(let i=0;i<dirt.length;i++)dirt[i].visible=care.phase==='wash'&&!care.washedZones[i];puppy.setFoam(Array(8).fill(0));for(const drop of wetSpots)drop.visible=false;dog.rotation.z=0;showOutfit();stopDryer();clearBubbles();renderUI();}
+function enterChase(){if(parkRide)leaveRide();parkJump.height=0;parkJump.velocity=0;stage='chase';paused=false;park.visible=true;clinic.visible=false;player.visible=true;player.position.set(0,0,0);dog.position.set(0,0,5);angle=0;player.rotation.y=0;setParkView();for(let i=0;i<dirt.length;i++)dirt[i].visible=care.phase==='wash'&&!care.washedZones[i];puppy.setFoam(Array(8).fill(0));for(const drop of wetSpots)drop.visible=false;dog.rotation.z=0;showOutfit();stopDryer();clearBubbles();renderUI();}
 let capture=null,jumpStart=new THREE.Vector3(),jumpEnd=new THREE.Vector3();
 const catchTarget=document.createElement('button');catchTarget.id='catch-target';catchTarget.hidden=true;catchTarget.textContent='◎';catchTarget.setAttribute('aria-label',t('catch'));document.body.append(catchTarget);
 catchTarget.onclick=()=>{if(paused||!capture)return;capture.click(true);};
@@ -508,7 +524,7 @@ function positionCatchTarget(){
   catchTarget.classList.toggle('ready',capture.ready);catchTarget.setAttribute('aria-label',t('catch'));
   catchTarget.style.setProperty('--ring-scale',String(1.6-capture.time/1.8*.6));
 }
-function act(){if(paused)return;if(stage==='collect'){keys.clear();enterCare();return;}if(stage==='chase'){if(player.position.distanceTo(dog.position)<3)startCapture();else toast(t('near'));}else if(stage==='timing'&&capture?.phase==='aim'){capture.click(true);}}
+function act(){if(paused||parkRide)return;if(stage==='collect'){keys.clear();enterCare();return;}if(stage==='chase'){if(player.position.distanceTo(dog.position)<3)startCapture();else toast(t('near'));}else if(stage==='timing'&&capture?.phase==='aim'){capture.click(true);}}
 
 action.onclick=act;document.querySelector('#pause').onclick=()=>{paused=!paused;keys.clear();stopDryer();renderUI();};document.querySelector('#language').onchange=e=>{lang=e.target.value;stopDryer();renderUI();for(const b of bubbles)b.el.setAttribute('aria-label',`${t('wash')} · ${money(b.price)}`);};
 function clearBubbles(){for(const b of bubbles)b.el.remove();bubbles=[];selectedBubble=null;}
@@ -555,7 +571,13 @@ function addBubble(){
   el.addEventListener('pointercancel',()=>{selectedBubble=null;resetPosition();});
   el.addEventListener('keydown',e=>{if(['Enter',' '].includes(e.key)){e.preventDefault();if(!paused&&!mathTask&&stage==='wash')buyBubble(b);}});
 }
-const clock=new THREE.Clock();function loop(){requestAnimationFrame(loop);const dt=Math.min(clock.getDelta(),.05);if(!paused&&!mathTask){elapsed+=dt;dryerKnockTime=Math.max(0,dryerKnockTime-dt);if(stage==='chase'||stage==='collect'){updateCoins();const forward=(keys.has('w')||keys.has('arrowup')||keys.has('up')?1:0)-(keys.has('s')||keys.has('arrowdown')||keys.has('down')?1:0);const turn=(keys.has('a')||keys.has('arrowleft')||keys.has('left')?1:0)-(keys.has('d')||keys.has('arrowright')||keys.has('right')?1:0);angle+=turn*dt*2.2;player.rotation.y=angle;player.position.x+=Math.sin(angle)*forward*dt*5;player.position.z+=Math.cos(angle)*forward*dt*5;if(player.position.length()>51)player.position.setLength(51);parkJump.tick(dt);player.position.y=groundHeight(player.position.x,player.position.z)+parkJump.height;owner.animate(elapsed,forward!==0,parkJump.height>0?'jump':null);const route=dogDestination(elapsed);const dest=new THREE.Vector3(route.x,0,route.z);const dir=dest.sub(dog.position);dir.y=0;if(dir.length()>.2){dog.position.addScaledVector(dir.normalize(),dt*2);dog.rotation.y=Math.atan2(dir.x,dir.z);}dog.position.y=groundHeight(dog.position.x,dog.position.z)+Math.sin(elapsed*14)*.035;action.disabled=stage==='collect'?false:player.position.distanceTo(dog.position)>=3;}if(stage==='timing'&&capture)updateCapture(dt);if(stage==='wash'){if(bubbles.some(b=>economy.canPayAmount(b.price)))care.tickWash(dt*.45);updateCareHud();if(care.comfort<=0)escapeCare();}
+const clock=new THREE.Clock();function loop(){requestAnimationFrame(loop);const dt=Math.min(clock.getDelta(),.05);if(!paused&&!mathTask){elapsed+=dt;dryerKnockTime=Math.max(0,dryerKnockTime-dt);if(stage==='chase'||stage==='collect'){updateCoins();const forward=(keys.has('w')||keys.has('arrowup')||keys.has('up')?1:0)-(keys.has('s')||keys.has('arrowdown')||keys.has('down')?1:0);const turn=(keys.has('a')||keys.has('arrowleft')||keys.has('left')?1:0)-(keys.has('d')||keys.has('arrowright')||keys.has('right')?1:0);angle+=turn*dt*2.2;player.rotation.y=angle;if(parkRide)updateRide(dt);else{
+ const movement=moveAroundObjects(player.position.x,player.position.z,player.position.x+Math.sin(angle)*forward*dt*5,player.position.z+Math.cos(angle)*forward*dt*5,player.position.y);
+ player.position.x=movement.x;player.position.z=movement.z;
+ if(player.position.length()>51)player.position.setLength(51);parkJump.tick(dt);player.position.y=groundHeight(player.position.x,player.position.z)+parkJump.height;owner.animate(elapsed,forward!==0,parkJump.height>0?'jump':null);
+}
+rideButton.hidden=!parkRide&&!nearbyRide(player.position.x,player.position.z);rideButton.textContent=t(parkRide?'leaveRide':nearbyRide(player.position.x,player.position.z)==='swing'?'useSwing':'useSlide');
+const route=dogDestination(elapsed);const dest=new THREE.Vector3(route.x,0,route.z);const dir=dest.sub(dog.position);dir.y=0;if(dir.length()>.2){dir.normalize();const dogMove=moveAroundObjects(dog.position.x,dog.position.z,dog.position.x+dir.x*dt*2,dog.position.z+dir.z*dt*2,0);dog.position.x=dogMove.x;dog.position.z=dogMove.z;dog.rotation.y=Math.atan2(dir.x,dir.z);}dog.position.y=groundHeight(dog.position.x,dog.position.z)+Math.sin(elapsed*14)*.035;action.disabled=parkRide?true:stage==='collect'?false:player.position.distanceTo(dog.position)>=3;}if(stage==='timing'&&capture)updateCapture(dt);if(stage==='wash'){if(bubbles.some(b=>economy.canPayAmount(b.price)))care.tickWash(dt*.45);updateCareHud();if(care.comfort<=0)escapeCare();}
 if(stage==='rinse')updateShower();
 if(stage==='rinse'&&rinseZone!==null){const done=care.rinse(dt,rinseZone);syncSoap();updateCareHud();if(elapsed-lastWaterSound>.5){sound.play('water');lastWaterSound=elapsed;}if(done){sound.play('happy');enterCare();}}
 if(stage==='dry'){

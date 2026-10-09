@@ -11,7 +11,8 @@ Son güncelleme: 9 Ekim 2026. Bu belge yeni sohbetler için kısa proje hafızas
 ## Tamamlananlar
 
 - Kız/erkek karakter; 4 saç modeli, 5 saç rengi, 4 ten/kıyafet rengi, şapkalar. Sürekli yüz geometrisi ve eklem hareketleri; modeller hâlâ prosedürel Three.js, Blender/GLB varlığı yok.
-- 108 birim çaplı park, üç yürünebilir tepe, küçük oyun alanı dekorları, arkadan takip kamera, WASD/oklar ve ekran kontrolleri. J/düğmeyle serbest zıplama; oyuncu, köpek ve coinlerde ortak zemin yüksekliği. Köpek değişken bir rotada koşar. Yakalamada zıplama, havada hedef halkası, başarıda köpeği kucağa alma ve odaya geçiş; kaçırmada köpek uzaklaşır.
+- 108 birim çaplı park, üç yürünebilir tepe, kullanılabilir salıncak/kaydırak ve küçük basamak dekorları, arkadan takip kamera, WASD/oklar ve ekran kontrolleri. J/düğmeyle serbest zıplama; oyuncu, köpek ve coinlerde ortak zemin yüksekliği. Köpek değişken bir rotada koşar. Yakalamada zıplama, havada hedef halkası, başarıda köpeği kucağa alma ve odaya geçiş; kaçırmada köpek uzaklaşır.
+- Salıncağa/kaydırağa yaklaşınca düğme veya E ile kullanım; oturma/sallanma, merdiven çıkışı/kayma, güvenli iniş. Nesnelerin içinden yürüyerek geçiş engellenir; aynı park ziyaretinde yakalama/coin akışı korunur.
 - Küçük su haznesi, yavaş uçuşan fiyatlı baloncuklar, dokulu kir. Köpek düğmelerle/yatay sürüklemeyle döndürülür; 8 kirli bölge ayrı temizlenir ve köpük birikir.
 - Yandaki suyu açıp duş başlığını köpüklere sürükleyerek durulama (klavyede oklar); 4 bölgeyi havluyla silme. Son düzeltme: her tıklama/dokunma veya Enter/Space %50 ilerletir; iki basış yeterlidir. Sürükleme de ilerletir, bırakma ayrıca sayılmaz.
 - Havlu sonrası ıslaklık %60; fön fazla ısınınca köpek cihazı patisiyle iter, yalnızca fön yeniden başlatılır ve yeniden ücret alınır.
@@ -23,7 +24,7 @@ Son güncelleme: 9 Ekim 2026. Bu belge yeni sohbetler için kısa proje hafızas
 
 ## Doğrulama ve sınırlar
 
-Son uygulama düzeltmesinde **21 Node testi ve Vite derlemesi geçti**. Son kontrolde musluğun açılması/kapanması, duş sürükleme/bırakma, duraklatma, tepe zemini ve klavye/telefon boyutunda zıplama Chromium'da doğrulandı. Havlu tıklama/dokunma/klavye/sürükleme önceki düzeltmede doğrulandı. Önceki kapsamlı bakım kontrolünde 8 fiyatlı hedefli baloncuk, sorular, durulama ve havlu sırası doğrulandı; uzun durulama kontrolünün bazı bölgeleri yalnızca testte köpük miktarı azaltılarak hızlandırıldı.
+Son uygulama düzeltmesinde **22 Node testi ve Vite derlemesi geçti**. Son kontrolde yaklaşınca kullanım düğmesi, nesne çarpışmaları, salıncakta binme/sallanma/inme/duraklatma ve telefon boyutunda kaydıraktan çıkıp kayma Chromium'da doğrulandı. Önceki kontrolde duş sürükleme ve serbest zıplama doğrulandı. Havlu tıklama/dokunma/klavye/sürükleme önceki düzeltmede doğrulandı. Önceki kapsamlı bakım kontrolünde 8 fiyatlı hedefli baloncuk, sorular, durulama ve havlu sırası doğrulandı; uzun durulama kontrolünün bazı bölgeleri yalnızca testte köpük miktarı azaltılarak hızlandırıldı.
 
 Tarayıcı kontrolleri masaüstü Chromium ve telefon ekran boyutuyla yapıldı; gerçek cihaz performansı ve çocuklarla kullanım denemesi yapılmadı. Derlemede >500 kB JS paket uyarısı var; derleme başarısızlığı değil. Oyun için herkese açık kalıcı bir site veya App Store yayını bu çalışmada kurulmadı. `docs/` görselleri örnektir; her son değişikliği göstermeyebilir.
 
