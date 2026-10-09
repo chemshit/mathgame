@@ -18,7 +18,7 @@ World Pet Wash, 7–12 yaş grubu (İsviçre üçüncü sınıf dahil) için tar
 - `npm test`: Node testleri. `npm run build`: üretim derlemesi.
 - `src/main.js`: oyun döngüsü, aşamalar, kontroller, UI ve TR/EN/DE metinleri.
 - `src/care.js`: bakım kuralları; `src/economy.js`: para/fiyatlar; `src/math.js`: hesap soruları.
-- `src/capture.js`: yakalama sırası; `src/sound.js`: Web Audio ve ses tercihi.
+- `src/park.js`: ortak tepe yüksekliği, serbest zıplama ve köpek rotası; `src/capture.js`: yakalama sırası; `src/sound.js`: Web Audio ve ses tercihi.
 - `src/character.js`: oyuncu; `src/visuals.js`: köpek ve bakım odası; `src/style.css`: duyarlı UI.
 - `tests/`: saf kural testleri; `docs/`: görünüm örnekleri. Görseller kodla birlikte yenilenmediyse eski olabilir.
 

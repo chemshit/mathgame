@@ -1,0 +1,4 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {HILLS,groundHeight,ParkJump,dogDestination} from '../src/park.js';
+test('hill height is shared, smooth and zero outside hills',()=>{assert.equal(groundHeight(0,0),0);for(const h of HILLS){assert.equal(groundHeight(h.x,h.z),h.h);assert.equal(groundHeight(h.x+h.r,h.z),0);assert.ok(groundHeight(h.x+h.r/2,h.z)>0);}});
+test('jump leaves ground, blocks repeated jumps and lands',()=>{const jump=new ParkJump();assert.equal(jump.start(),true);assert.equal(jump.start(),false);jump.tick(.1);assert.ok(jump.height>0);for(let i=0;i<30;i++)jump.tick(.05);assert.equal(jump.height,0);assert.equal(jump.velocity,0);assert.equal(jump.start(),true);});
+test('puppy route stays in the park and varies',()=>{for(let t=0;t<500;t+=.5){const p=dogDestination(t);assert.ok(Math.hypot(p.x,p.z)<51);}assert.notDeepEqual(dogDestination(0),dogDestination(5));});

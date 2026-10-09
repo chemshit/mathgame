@@ -15,7 +15,7 @@ npm test
 
 Karakter seçimi → parkta köpeği yakalama → zamanlama oyunu → kirli noktalara baloncuk uygulama → suyla durulama → havluyla silme → kontrollü fön → kıyafet seçimi → yıldız değerlendirmesi.
 
-WASD / ok tuşları: ileri, geri ve dönüş. Boşluk: yakalama/zamanlama. Telefonda ekran düğmeleri kullanılır; yatay ekran önerilir. Yıkamada köpeği döndürüp baloncukları görünen, işaretli kirli noktalara bırakın. Durulamada köpüklü noktaları basılı tutun; havluda dört bölgeyi ileri geri silin. Fön ekranında dört ıslak bölgenin düğmelerinde basılı tutun; sıcaklık göstergesi kırmızıya dönmeden başka bölgeye geçin. Bırakınca bölge soğur. Fare, dokunmatik veya odaklanmış düğmede boşluk/Enter kullanılabilir. Kıyafet ekranında köpeğin sevdiği rengi takip ederek toka, gözlük, şapka ve kıyafet seçin. Dört beğenilen seçimden sonra bakımı tamamlayın. Beğenmediği her seçim rahatlığı azaltır. Kaçışta köpeği yeniden yakalayıp yalnızca yarım kalan aşamayı baştan tamamlayın; biten yıkama ve fön korunur. En iyi yıldız sonucu tarayıcıda saklanır. Hesap veya sunucu gerekmez.
+WASD / ok tuşları: ileri, geri ve dönüş. J veya Zıpla düğmesi: serbest zıplama. Boşluk: yakalama/zamanlama. Telefonda ekran düğmeleri kullanılır; yatay ekran önerilir. Yıkamada köpeği döndürüp baloncukları görünen, işaretli kirli noktalara bırakın. Durulamada yandaki suyu açıp duş başlığını köpüklere sürükleyin; havluda dört bölgeyi ileri geri silin. Fön ekranında dört ıslak bölgenin düğmelerinde basılı tutun; sıcaklık göstergesi kırmızıya dönmeden başka bölgeye geçin. Bırakınca bölge soğur. Fare, dokunmatik veya odaklanmış düğmede boşluk/Enter kullanılabilir. Kıyafet ekranında köpeğin sevdiği rengi takip ederek toka, gözlük, şapka ve kıyafet seçin. Dört beğenilen seçimden sonra bakımı tamamlayın. Beğenmediği her seçim rahatlığı azaltır. Kaçışta köpeği yeniden yakalayıp yalnızca yarım kalan aşamayı baştan tamamlayın; biten yıkama ve fön korunur. En iyi yıldız sonucu tarayıcıda saklanır. Hesap veya sunucu gerekmez.
 
 Tüy kesimi ve sahiplenme sonrası kişiselleştirme sonraki sürümlerdedir. Köpek ve bakım odası özgün, yumuşak hatlı 3B modellerden oluşur (`src/visuals.js`). Köpekte yerel olarak üretilen tüy dokusu, doğal patiler, göz kırpma, kuyruk ve koşma animasyonları; odada küvet, dolaplar, havlular, şişeler ve hareketli fön vardır. Harici model veya görsel servisi gerekmez. Odanın sabit detayları malzemeye göre birleştirilir; tüy demetleri tek instanced çizimde gösterilir. Üretim sürümü için mobil cihazlarda performans ve erişilebilirlik ayrıca doğrulanmalıdır.
 
@@ -62,3 +62,11 @@ Yerel Web Audio sesleri: baloncuk, coin, cevap geri bildirimi, su, havlu ve baş
 ![Durulama](docs/rinse.png)
 
 Havlu aşamasında her tıklama/dokunma veya Enter/Space basışı bölgeyi %50 ilerletir: her bölge iki basışta tamamlanır. İleri geri sürükleme de daha kısa hareketlerle ilerler; sürüklemeyi bırakmak ayrıca bir tıklama olarak sayılmaz. Dört bölge tamamlanınca fön otomatik açılır.
+
+
+Durulamada yandaki musluk suyu açar/kapatır. Başlık fare/dokunmatik ile köpüğün üzerine sürüklenirken su akar; bırakma veya duraklatma durulamayı durdurur. Klavyede başlığı odaklayıp oklarla taşıyabilirsiniz. Köpeği çevirmek diğer köpüklü tarafı açar. Aşama değişince musluk kapanır.
+
+Parkta üç yürünebilir tepe vardır; oyuncu, köpek ve coinler aynı zemin yüksekliğini kullanır. J ve ekrandaki Zıpla düğmesi serbest zıplama sağlar; yakalama sırasındaki zıplama ayrıca devam eder. Köpek daha değişken bir rotada koşar. Küçük salıncak, kaydırak ve basamak alanı park dekorlarıdır; ayrı mini oyun/fizik etkileşimleri henüz yoktur.
+
+![Sürüklenebilir duş](docs/shower.png)
+![Park oyun alanı](docs/playground.png)

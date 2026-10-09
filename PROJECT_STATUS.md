@@ -11,9 +11,9 @@ Son güncelleme: 9 Ekim 2026. Bu belge yeni sohbetler için kısa proje hafızas
 ## Tamamlananlar
 
 - Kız/erkek karakter; 4 saç modeli, 5 saç rengi, 4 ten/kıyafet rengi, şapkalar. Sürekli yüz geometrisi ve eklem hareketleri; modeller hâlâ prosedürel Three.js, Blender/GLB varlığı yok.
-- 108 birim çaplı park, arkadan takip kamera, WASD/oklar ve ekran kontrolleri. Yakalamada zıplama, havada hedef halkası, başarıda köpeği kucağa alma ve odaya geçiş; kaçırmada köpek uzaklaşır.
+- 108 birim çaplı park, üç yürünebilir tepe, küçük oyun alanı dekorları, arkadan takip kamera, WASD/oklar ve ekran kontrolleri. J/düğmeyle serbest zıplama; oyuncu, köpek ve coinlerde ortak zemin yüksekliği. Köpek değişken bir rotada koşar. Yakalamada zıplama, havada hedef halkası, başarıda köpeği kucağa alma ve odaya geçiş; kaçırmada köpek uzaklaşır.
 - Küçük su haznesi, yavaş uçuşan fiyatlı baloncuklar, dokulu kir. Köpek düğmelerle/yatay sürüklemeyle döndürülür; 8 kirli bölge ayrı temizlenir ve köpük birikir.
-- Köpüklü bölgeleri basılı tutarak durulama; 4 bölgeyi havluyla silme. Son düzeltme: her tıklama/dokunma veya Enter/Space %50 ilerletir; iki basış yeterlidir. Sürükleme de ilerletir, bırakma ayrıca sayılmaz.
+- Yandaki suyu açıp duş başlığını köpüklere sürükleyerek durulama (klavyede oklar); 4 bölgeyi havluyla silme. Son düzeltme: her tıklama/dokunma veya Enter/Space %50 ilerletir; iki basış yeterlidir. Sürükleme de ilerletir, bırakma ayrıca sayılmaz.
 - Havlu sonrası ıslaklık %60; fön fazla ısınınca köpek cihazı patisiyle iter, yalnızca fön yeniden başlatılır ve yeniden ücret alınır.
 - Toka, gözlük, şapka, kıyafet; köpeğin sevdiği renk ipucu ve beğenmeme/kaçış.
 - Rappen/Frank coinler (5/10/20/50 Rp., 1/2/5 Fr.). Farklı baloncuk fiyatları 30–80 Rp.; fön/kıyafet fiyatları oyun başına değişir. Bakiye/harcama ve yıldızlar gösterilir; en iyi yıldız ve ses tercihi localStorage'da saklanır.
@@ -23,7 +23,7 @@ Son güncelleme: 9 Ekim 2026. Bu belge yeni sohbetler için kısa proje hafızas
 
 ## Doğrulama ve sınırlar
 
-Son uygulama düzeltmesinde **18 Node testi ve Vite derlemesi geçti**. Havlu fare tıklaması, dokunma, klavye, sürükleme ve otomatik fön geçişi Chromium'da doğrulandı. Önceki kapsamlı bakım kontrolünde 8 fiyatlı hedefli baloncuk, sorular, durulama ve havlu sırası doğrulandı; uzun durulama kontrolünün bazı bölgeleri yalnızca testte köpük miktarı azaltılarak hızlandırıldı.
+Son uygulama düzeltmesinde **21 Node testi ve Vite derlemesi geçti**. Son kontrolde musluğun açılması/kapanması, duş sürükleme/bırakma, duraklatma, tepe zemini ve klavye/telefon boyutunda zıplama Chromium'da doğrulandı. Havlu tıklama/dokunma/klavye/sürükleme önceki düzeltmede doğrulandı. Önceki kapsamlı bakım kontrolünde 8 fiyatlı hedefli baloncuk, sorular, durulama ve havlu sırası doğrulandı; uzun durulama kontrolünün bazı bölgeleri yalnızca testte köpük miktarı azaltılarak hızlandırıldı.
 
 Tarayıcı kontrolleri masaüstü Chromium ve telefon ekran boyutuyla yapıldı; gerçek cihaz performansı ve çocuklarla kullanım denemesi yapılmadı. Derlemede >500 kB JS paket uyarısı var; derleme başarısızlığı değil. Oyun için herkese açık kalıcı bir site veya App Store yayını bu çalışmada kurulmadı. `docs/` görselleri örnektir; her son değişikliği göstermeyebilir.
 
