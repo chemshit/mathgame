@@ -1,5 +1,7 @@
 # World Pet Wash
 
+Yeni geliştirme sohbetleri için [çalışma rehberi](AGENTS.md) ve [güncel proje durumu](PROJECT_STATUS.md) dosyalarını inceleyin.
+
 Türkçe, İngilizce ve Almanca destekli 3B tarayıcı oyunu prototipi. Node.js 22.12+ gerekir.
 
 ![Yeni köpek modeli ve bakım odası](docs/pet-spa.png)
@@ -25,7 +27,7 @@ Büyütülmüş parkta 5, 10, 20 ve 50 Rappen; 1, 2 ve 5 Frank değerinde oyun p
 
 Para yetmezse işlemler gerçekleşmez ve cüzdan eksiye düşmez. “Parkta para topla” ile yarım kalan bakımın ilerlemesi korunarak para toplanabilir; “Bakıma dön” tekrar yakalamadan kaldığınız yerden devam eder. Gerçek kaçışta yalnızca yarım kalan aşama sıfırlanır; ödenen ücretler iade edilmez. Bütün paralar toplanırsa yeni bir parti oluşur. Parası olmayan oyuncunun yıkama bekleme süresi durur.
 
-Bu sürümde hesap sorusu ve gerçek para/ödeme yoktur; toplama, fiyatları görme ve oyun cüzdanından harcama altyapısı vardır.
+Bu sürümde oyun içi para ve hesap soruları vardır; gerçek para/ödeme yoktur.
 
 ## Karakter oluşturma
 
