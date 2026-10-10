@@ -212,6 +212,7 @@ export function createCharacter() {
       arms[i].rotation.x=-stride*.4;elbows[i].rotation.x=running?-.45-Math.max(0,stride)*.2:-.08;
       arms[i].rotation.z=(i===0?1:-1)*.08;
       if(pose){arms[i].rotation.x=pose==='hold'?-1.05:-2;elbows[i].rotation.x=pose==='hold'?-.9:-.25;arms[i].rotation.z=(i===0?1:-1)*(pose==='hold'?-.18:.12);}
+      if(pose==='hang'){arms[i].rotation.x=-Math.PI;elbows[i].rotation.x=-.08;arms[i].rotation.z=0;}
       if(pose==='sit'){legs[i].rotation.x=-Math.PI/2;knees[i].rotation.x=Math.PI/2;arms[i].rotation.x=-.4;elbows[i].rotation.x=-.5;}
       eyeLids[i].scale.y=blink?.15:1;
     }

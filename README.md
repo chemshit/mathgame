@@ -43,7 +43,7 @@ Fön ısısı kırmızı alana (>65) girer girmez köpek patisiyle fönü iter v
 
 Soru ekranında cüzdan üstte, ürün fiyatı altta vurgulanır. Yanlış cevap kırmızı mesaj ve kısa titreme gösterir; doğru cevap yeşil mesaj ve yıldız efektiyle 550 ms sonra işlemi otomatik tamamlar. Hareket azaltma tercihi CSS efektlerini kapatır.
 
-Park çapı 108 birimdir. Köpeğe yaklaşınca Yakala/Space zıplamayı başlatır. Çocuk havada dururken köpeğin üzerindeki hedef halkası yeşil olduğunda fareyle tıklayın veya telefonda dokunun (Space de desteklenir). Erken/geç tıklama, hedef dışına basma veya bekleme köpeğin kaçmasına neden olur. Başarılı yakalamada karakter köpeği kucağına alır ve bakım odasına geçer. Duraklatma yakalama süresini de durdurur.
+Park çapı 140 birimdir. Köpeğe yaklaşınca Yakala/Space zıplamayı başlatır. Çocuk havada dururken köpeğin üzerindeki hedef halkası yeşil olduğunda fareyle tıklayın veya telefonda dokunun (Space de desteklenir). Erken/geç tıklama, hedef dışına basma veya bekleme köpeğin kaçmasına neden olur. Başarılı yakalamada karakter köpeği kucağına alır ve bakım odasına geçer. Duraklatma yakalama süresini de durdurur.
 
 Karakterin güncel sürümü daha doğal baş/gövde oranları, parmaklar, bükülen dirsek ve dizler, göz kapağı hareketi, kumaş/saç/yüz için yerel üretilmiş hafif bump dokuları kullanır. Koşma ve kucaklama pozları eklem gruplarıyla hareket eder. Bu hâlâ prosedürel Three.js modelidir; Blender/GLB varlığı eklenmemiştir. Saç, şapka, ten ve kıyafet seçenekleri korunmuştur.
 
@@ -83,3 +83,6 @@ Saç modeli başın biçimini izleyen kesintisiz bir yüzey, hafif düzensiz sa�
 Kaydırak merdivenli yüksek uçtan alçak çıkışa eğimlidir; basamaklar, üst platform ve oturarak kayma yolu aynı yöndedir.
 
 ![Düzeltilmiş kaydırak](docs/slide.png)
+
+
+Park oyun alanı kenara taşındı ve genişletildi. Salıncak ve kaydırak yanında kum havuzu ile 12 birim uzunluğunda tutunma parkuru vardır. Kum havuzunda düğmeyle kumdan kale yapılabilir. Tutunma parkurunda sekiz geçişin her biri için 2–10 çarpım tablosundan bir soru çözülür; doğru cevap karakteri sonraki tutamağa taşır. Her sorunun süresi 15 saniyedir; yanlış cevap ilerletmez ve süreyi yenilemez. Süre dolunca veya E/İn ile ayrılınca güvenli başlangıca dönülür; tamamlayınca karşı uçta inilir. Duraklatma süreyi durdurur. Bu oyunlar ücretsizdir, ödül para vermez ve bakım ilerlemesini değiştirmez. Fare, ekran düğmeleri ve klavye desteklenir; yeni metinler TR/EN/DE olarak mevcuttur.

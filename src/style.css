@@ -34,3 +34,4 @@ body[data-stage="dress"] #toast{left:30%;bottom:80px;max-width:45%}
 .flowing #shower-handle::after{display:none}
 #water-tap{top:auto;left:auto;white-space:nowrap;box-shadow:0 3px 0 #7cb8ca}
 #ride-button{max-width:calc(100vw - 24px);white-space:normal}
+#play-card{position:fixed;right:16px;top:100px;z-index:6;background:#fff9e9f2;border-radius:18px;padding:16px;max-width:min(340px,calc(100vw - 32px));box-shadow:0 4px 18px #49634b33}#play-card[hidden]{display:none}#play-card p{margin:8px 0}#play-card form{display:flex;gap:8px;align-items:end}#play-card label{display:flex;flex-direction:column;gap:4px}#play-card input{width:90px;padding:10px;font-size:20px;border:2px solid #79b8a1;border-radius:10px}#monkey-feedback{color:#a04435}@media(max-height:600px){#play-card{top:72px;padding:10px;font-size:13px}#play-card input{font-size:16px;padding:6px}}
