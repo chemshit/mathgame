@@ -14,10 +14,17 @@ test('slide climbs at the high ladder end and descends toward the low exit',asyn
  for(let time=1.5;time<2.9;time+=.05){const a=slidePosition(time),b=slidePosition(time+.05);assert.ok(b.y<=a.y);assert.ok(b.z>=a.z);}
 });
 
-test('monkey bars require correct answers on all eight steps and expire without advancing',async()=>{
+test('monkey bars give 20 seconds per step and fail on wrong answers or timeout',async()=>{
  const {MonkeyChallenge}=await import('../src/park.js');const q=new MonkeyChallenge(()=>0);
- q.tick(5);assert.equal(q.remaining,10);assert.equal(q.answer('5'),false);assert.equal(q.step,0);assert.equal(q.remaining,10);
- assert.equal(q.answer('4'),true);assert.equal(q.step,1);assert.equal(q.remaining,15);
- for(let i=1;i<8;i++)assert.equal(q.answer('4'),true);assert.equal(q.done,true);assert.equal(q.answer('4'),false);
- const expired=new MonkeyChallenge(()=>.999);assert.equal(expired.left,10);expired.tick(16);assert.equal(expired.remaining,0);assert.equal(expired.answer('100'),false);assert.equal(expired.step,0);
+ q.tick(15);assert.equal(q.remaining,5);assert.equal(q.answer('4'),true);assert.equal(q.step,1);assert.equal(q.remaining,20);
+ for(let i=1;i<8;i++)assert.equal(q.answer('4'),true);assert.equal(q.done,true);assert.equal(q.failed,false);assert.equal(q.answer('4'),false);
+ const wrong=new MonkeyChallenge(()=>0);assert.equal(wrong.answer('5'),false);assert.equal(wrong.failed,true);assert.equal(wrong.answer('4'),false);
+ const expired=new MonkeyChallenge(()=>.999);expired.tick(21);assert.equal(expired.remaining,0);assert.equal(expired.failed,true);assert.equal(expired.answer('100'),false);
+});
+test('sandcastle grows with five answers, collapses on mistakes and stays completed',async()=>{
+ const {SandChallenge}=await import('../src/park.js');const q=new SandChallenge(()=>0);
+ assert.equal(q.answerValue,4);assert.equal(q.answer('4'),true);assert.equal(q.step,1);assert.equal(q.operation,'−');assert.equal(q.answerValue,0);
+ assert.equal(q.answer('999'),false);assert.equal(q.step,0);assert.equal(q.done,false);
+ for(let i=0;i<5;i++)assert.equal(q.answer(String(q.answerValue)),true);
+ assert.equal(q.done,true);assert.equal(q.step,5);assert.equal(q.answer('999'),false);assert.equal(q.step,5);
 });

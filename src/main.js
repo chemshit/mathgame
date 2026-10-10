@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import './style.css';
-import { PARK_RADIUS, PLAYGROUND, MonkeyChallenge, groundHeight, ParkJump, SwingMotion, slidePosition, dogDestination, nearbyRide, moveAroundObjects, blocked } from './park.js';
+import { PARK_RADIUS, PLAYGROUND, MonkeyChallenge, SandChallenge, groundHeight, ParkJump, SwingMotion, slidePosition, dogDestination, nearbyRide, moveAroundObjects, blocked } from './park.js';
 import { GameSound } from './sound.js';
 import { CaptureSequence } from './capture.js';
 import { MoneyQuestion, collectionQuestion } from './math.js';
@@ -77,6 +77,9 @@ Object.assign(texts.de,{useSwing:'Schaukeln (E)',useSlide:'Zur Rutsche (E)',leav
 Object.assign(texts.tr,{"useSand": "Kum havuzunda oyna (E)", "useMonkey": "Tutunma parkuruna başla (E)", "buildSand": "Kumdan kale yap", "monkeyTitle": "Çarp ve ilerle", "monkeyAnswer": "Cevap", "monkeyCheck": "Kontrol et", "monkeyRetry": "Tekrar dene!", "monkeyWin": "Harika, karşıya geçtin!", "monkeyTime": "Süre doldu. Yeniden deneyebilirsin!"});
 Object.assign(texts.en,{"useSand": "Play in the sandbox (E)", "useMonkey": "Start monkey bars (E)", "buildSand": "Build a sandcastle", "monkeyTitle": "Multiply and move", "monkeyAnswer": "Answer", "monkeyCheck": "Check", "monkeyRetry": "Try again!", "monkeyWin": "Great, you crossed!", "monkeyTime": "Time is up. Try again!"});
 Object.assign(texts.de,{"useSand": "Im Sandkasten spielen (E)", "useMonkey": "Hangeln starten (E)", "buildSand": "Sandburg bauen", "monkeyTitle": "Rechnen und hangeln", "monkeyAnswer": "Antwort", "monkeyCheck": "Prüfen", "monkeyRetry": "Versuche es noch einmal!", "monkeyWin": "Super, du bist drüben!", "monkeyTime": "Zeit abgelaufen. Versuche es erneut!"});
+Object.assign(texts.tr,{"sandTitle": "Matematikle kale yap", "sandWrong": "Kale yıkıldı. Yeniden yapabilirsin!", "sandWin": "Harika! Kalen parkta kalacak.", "handPain": "Ellerin yoruldu", "timeRemaining": "Kalan süre", "monkeyWrong": "Yanlış cevap, tutamak bırakıldı. Yeniden dene!"});
+Object.assign(texts.en,{"sandTitle": "Build with maths", "sandWrong": "The castle fell. You can rebuild it!", "sandWin": "Great! Your castle will stay in the park.", "handPain": "Your hands are tired", "timeRemaining": "Time remaining", "monkeyWrong": "Wrong answer, grip released. Try again!"});
+Object.assign(texts.de,{"sandTitle": "Mit Mathe eine Burg bauen", "sandWrong": "Die Burg ist eingestürzt. Baue sie erneut!", "sandWin": "Super! Deine Burg bleibt im Park.", "handPain": "Deine Hände sind müde", "timeRemaining": "Verbleibende Zeit", "monkeyWrong": "Falsche Antwort, losgelassen. Versuche es erneut!"});
 const t=k=>texts[lang][k];
 const app=document.querySelector('#app');
 app.innerHTML=`<canvas id="world"></canvas><header><strong>🐾 World Pet Wash <small>PROTOTYPE · 06</small></strong><div><div id="wallet"></div><select id="language" aria-label="Language"><option value="tr">Türkçe</option><option value="en">English</option><option value="de">Deutsch</option></select><button id="pause">Ⅱ</button></div></header><div id="panel"></div><div id="hud"></div><div id="controls"><div id="pad"><button data-dir="up">▲</button><div><button data-dir="left">◀</button><button data-dir="down">▼</button><button data-dir="right">▶</button></div></div><button id="action"></button></div><div id="toast" role="status"></div><div id="bubble-layer"></div><div id="dryer-layer"></div><div id="wardrobe"></div><div id="shop"></div><footer>World Pet Wash · browser prototype</footer>`;
@@ -135,7 +138,7 @@ const coinLabels=new Map(DENOMINATIONS.map(value=>[value,coinLabel(value)]));
 function spawnCoins(reset=false) {
   for(const coin of coinItems){coin.group.children[0].material.dispose();coin.group.children[1].geometry.dispose();}
   coinLayer.clear();coinItems.length=0;
-  if(reset){coinBatch=0;sandCastle.visible=false;}
+  if(reset){coinBatch=0;sandChallenge=new SandChallenge();sandCollapse=0;syncSandCastle();}
   for(let i=0;i<42;i++) {
     const value=DENOMINATIONS[i%DENOMINATIONS.length];
     const group=new THREE.Group();coinLayer.add(group);
@@ -237,22 +240,51 @@ addEventListener('pointerdown',()=>sound.unlock(),{once:true});addEventListener(
 const soundButton=document.createElement('button');soundButton.id='sound-toggle';document.querySelector('header>div').append(soundButton);
 soundButton.onclick=()=>{sound.toggle();renderSound();};
 function renderSound(){soundButton.textContent=sound.muted?'🔇':'🔊';soundButton.setAttribute('aria-label',t(sound.muted?'soundOff':'soundOn'));soundButton.setAttribute('aria-pressed',String(!sound.muted));}
-let parkRide=null,rideTime=0,swingMotion=new SwingMotion(),monkeyChallenge=null,monkeyDisplayStep=0;
+let parkRide=null,rideTime=0,swingMotion=new SwingMotion(),monkeyChallenge=null,monkeyDisplayStep=0,sandChallenge=new SandChallenge(),sandCollapse=0,fallVelocity=0;
 const playCard=document.createElement('section');playCard.id='play-card';document.body.append(playCard);playCard.hidden=true;
+function syncSandCastle(){
+ const progress=sandChallenge.step/sandChallenge.total;
+ sandCastle.visible=progress>0||sandCollapse>0;
+ const size=sandCollapse>0?sandCollapse:progress;
+ sandCastle.scale.set(.35+size*.85,Math.max(.02,size*1.8),.35+size*.85);
+ sandCastle.rotation.z=sandCollapse>0?(1-sandCollapse)*.35:0;
+}
+const handPain=document.createElement('div');handPain.id='hand-pain';handPain.textContent='ϟ';handPain.hidden=true;handPain.setAttribute('role','img');document.body.append(handPain);
+function startFall(message){parkRide='fall';fallVelocity=0;playCard.hidden=true;handPain.hidden=true;keys.clear();sound.play('retry');toast(message);}
 function renderPlayCard(){
- playCard.hidden=paused||!['sand','monkey'].includes(parkRide);if(playCard.hidden)return;
- if(parkRide==='sand'){playCard.innerHTML=`<button id="build-sand">${t('buildSand')}</button>`;playCard.querySelector('button').onclick=()=>{if(paused)return;sandCastle.visible=true;sound.play('happy');};return;}
- const q=monkeyChallenge;playCard.innerHTML=`<strong>${t('monkeyTitle')} · ${q.step}/${q.total}</strong><p><span id="monkey-time">${Math.ceil(q.remaining)} s</span> · ${q.left} × ${q.right} = ?</p><form><label>${t('monkeyAnswer')} <input aria-label="${t('monkeyAnswer')}" inputmode="numeric" autocomplete="off" pattern="[0-9]+" required></label><button>${t('monkeyCheck')}</button></form><p id="monkey-feedback" role="status"></p>`;
- playCard.querySelector('form').onsubmit=e=>{e.preventDefault();if(paused||parkRide!=='monkey')return;if(q.answer(playCard.querySelector('input').value)){sound.play('happy');if(q.done){leaveRide();player.position.set(-30,0,-13);toast(t('monkeyWin'));}else{renderPlayCard();playCard.querySelector('input').focus();}}else{sound.play('retry');playCard.querySelector('#monkey-feedback').textContent=t('monkeyRetry');playCard.querySelector('input').select();}};
+ handPain.hidden=true;playCard.hidden=paused||!['sand','monkey'].includes(parkRide);if(playCard.hidden)return;
+ const isSand=parkRide==='sand',q=isSand?sandChallenge:monkeyChallenge;
+ if(isSand&&q.done){playCard.innerHTML=`<strong>${t('sandWin')}</strong>`;return;}
+ playCard.innerHTML=`<strong>${t(isSand?'sandTitle':'monkeyTitle')} · ${q.step}/${q.total}</strong>${isSand?'':`<progress id="monkey-time" max="20" value="${q.remaining}" aria-label="${t('timeRemaining')}"></progress>`}<p>${q.left} ${isSand?q.operation:'×'} ${q.right} = ?</p><form><label>${t('monkeyAnswer')} <input aria-label="${t('monkeyAnswer')}" inputmode="numeric" autocomplete="off" pattern="[0-9]+" required></label><button>${t('monkeyCheck')}</button></form><p id="monkey-feedback" role="status"></p>`;
+ playCard.querySelector('form').onsubmit=e=>{
+  e.preventDefault();if(paused||parkRide!==(isSand?'sand':'monkey'))return;
+  const correct=q.answer(playCard.querySelector('input').value);
+  if(isSand){
+   if(correct){sandCollapse=0;syncSandCastle();sound.play('happy');renderPlayCard();if(!q.done)playCard.querySelector('input').focus();}
+   else{sandCollapse=sandCastle.visible?Math.max(.2,sandCastle.scale.y/1.8):0;sound.play('retry');renderPlayCard();playCard.querySelector('#monkey-feedback').textContent=t('sandWrong');playCard.querySelector('input').focus();}
+  }else if(!correct){startFall(t('monkeyWrong'));}
+  else{sound.play('happy');if(q.done){leaveRide();player.position.set(-30,0,-13);toast(t('monkeyWin'));}else{renderPlayCard();playCard.querySelector('input').focus();}}
+ };
 }
 const rideButton=document.createElement('button');rideButton.id='ride-button';document.querySelector('#controls').append(rideButton);rideButton.hidden=true;
-function leaveRide(){const previous=parkRide;parkRide=null;playCard.hidden=true;monkeyChallenge=null;swingPivot.rotation.x=0;const p=PLAYGROUND[previous]||PLAYGROUND.swing;player.position.set(p.x,0,p.z-2);keys.clear();owner.animate(elapsed,false);}
-function useRide(){if(paused||!['chase','collect'].includes(stage))return;if(parkRide){leaveRide();return;}const choice=nearbyRide(player.position.x,player.position.z);if(!choice)return;parkRide=choice;rideTime=0;swingMotion=new SwingMotion();angle=0;parkJump.height=0;parkJump.velocity=0;keys.clear();if(choice==='monkey'){monkeyChallenge=new MonkeyChallenge();monkeyDisplayStep=0;}renderPlayCard();}
+function leaveRide(){const previous=parkRide;parkRide=null;playCard.hidden=true;handPain.hidden=true;monkeyChallenge=null;swingPivot.rotation.x=0;const p=PLAYGROUND[previous]||PLAYGROUND.swing;player.position.set(p.x,0,p.z-2);keys.clear();owner.animate(elapsed,false);}
+function useRide(){if(paused||parkRide==='fall'||!['chase','collect'].includes(stage))return;if(parkRide){leaveRide();return;}const choice=nearbyRide(player.position.x,player.position.z);if(!choice)return;parkRide=choice;rideTime=0;swingMotion=new SwingMotion();angle=0;parkJump.height=0;parkJump.velocity=0;keys.clear();if(choice==='monkey'){monkeyChallenge=new MonkeyChallenge();monkeyDisplayStep=0;}renderPlayCard();}
 rideButton.onclick=useRide;
 rideButton.onkeydown=e=>{if(['Enter',' '].includes(e.key)){e.preventDefault();e.stopPropagation();if(!e.repeat)useRide();}};
 function updateRide(dt,timerDt=dt){rideTime+=dt;
- if(parkRide==='sand'){player.position.set(-42,0,-19);owner.animate(elapsed,false,'sit');}
- if(parkRide==='monkey'){const q=monkeyChallenge;q.tick(timerDt);if(q.done){leaveRide();toast(t('monkeyTime'));return;}monkeyDisplayStep=gentleMotion.matches?q.step:monkeyDisplayStep+(q.step-monkeyDisplayStep)*Math.min(1,dt*6);player.position.set(-30,1.15,-27+monkeyDisplayStep*1.5);owner.animate(elapsed,false,'hang');playCard.querySelector('#monkey-time').textContent=Math.ceil(q.remaining)+' s';}
+ if(parkRide==='sand'){player.position.set(-43.5,0,-20);owner.animate(elapsed,false,'sit');}
+ if(parkRide==='fall'){
+  fallVelocity+=9.8*timerDt;player.position.y=Math.max(groundHeight(player.position.x,player.position.z),player.position.y-fallVelocity*timerDt);owner.animate(elapsed,false);
+  if(player.position.y<=groundHeight(player.position.x,player.position.z)){parkRide=null;monkeyChallenge=null;keys.clear();}
+ }
+ if(parkRide==='monkey'){
+  const q=monkeyChallenge;q.tick(timerDt);if(q.failed){startFall(t('monkeyTime'));return;}
+  monkeyDisplayStep=gentleMotion.matches?q.step:monkeyDisplayStep+(q.step-monkeyDisplayStep)*Math.min(1,dt*6);
+  player.position.set(-30,1.15,-27+monkeyDisplayStep*1.5);owner.animate(elapsed,false,'hang');
+  const bar=playCard.querySelector('#monkey-time');bar.value=q.remaining;bar.classList.toggle('urgent',q.remaining<=5);
+  handPain.hidden=q.remaining>5;handPain.setAttribute('aria-label',t('handPain'));
+  const hand=player.localToWorld(new THREE.Vector3(.27,2.25,0)).project(camera);handPain.style.left=(hand.x*.5+.5)*innerWidth+'px';handPain.style.top=(-hand.y*.5+.5)*innerHeight+'px';
+ }
 
  if(parkRide==='swing'){const push=(keys.has('w')||keys.has('arrowup')||keys.has('up')?1:0)-(keys.has('s')||keys.has('arrowdown')||keys.has('down')?1:0);swingMotion.tick(dt,push);const theta=-swingMotion.angle;swingPivot.rotation.x=theta;player.position.set(-38,2.8-1.92*Math.cos(theta)-.78,-27-1.92*Math.sin(theta));player.rotation.y=0;owner.animate(elapsed,false,'sit');}
  if(parkRide==='slide'){const p=slidePosition(rideTime);player.position.set(p.x,p.y,p.z);player.rotation.y=0;owner.animate(elapsed,false,rideTime<1.5?'jump':'sit');if(rideTime>3.1){parkRide=null;player.position.set(-34.8,0,-23.5);owner.animate(elapsed,false);}}
@@ -602,12 +634,12 @@ function addBubble(){
   el.addEventListener('pointercancel',()=>{selectedBubble=null;resetPosition();});
   el.addEventListener('keydown',e=>{if(['Enter',' '].includes(e.key)){e.preventDefault();if(!paused&&!mathTask&&stage==='wash')buyBubble(b);}});
 }
-const clock=new THREE.Clock();function loop(){requestAnimationFrame(loop);const frameDt=clock.getDelta(),dt=Math.min(frameDt,.05);if(!paused&&!mathTask){elapsed+=dt;dryerKnockTime=Math.max(0,dryerKnockTime-dt);if(stage==='chase'||stage==='collect'){updateCoins();const forward=(keys.has('w')||keys.has('arrowup')||keys.has('up')?1:0)-(keys.has('s')||keys.has('arrowdown')||keys.has('down')?1:0);const turn=(keys.has('a')||keys.has('arrowleft')||keys.has('left')?1:0)-(keys.has('d')||keys.has('arrowright')||keys.has('right')?1:0);angle+=turn*dt*2.2;player.rotation.y=angle;if(parkRide)updateRide(dt,frameDt);else{
+const clock=new THREE.Clock();function loop(){requestAnimationFrame(loop);const frameDt=clock.getDelta(),dt=Math.min(frameDt,.05);if(!paused&&!mathTask){elapsed+=dt;if(sandCollapse>0){sandCollapse=Math.max(0,sandCollapse-frameDt*1.5);syncSandCastle();}dryerKnockTime=Math.max(0,dryerKnockTime-dt);if(stage==='chase'||stage==='collect'){updateCoins();const forward=(keys.has('w')||keys.has('arrowup')||keys.has('up')?1:0)-(keys.has('s')||keys.has('arrowdown')||keys.has('down')?1:0);const turn=(keys.has('a')||keys.has('arrowleft')||keys.has('left')?1:0)-(keys.has('d')||keys.has('arrowright')||keys.has('right')?1:0);angle+=turn*dt*2.2;player.rotation.y=angle;if(parkRide)updateRide(dt,frameDt);else{
  const movement=moveAroundObjects(player.position.x,player.position.z,player.position.x+Math.sin(angle)*forward*dt*5,player.position.z+Math.cos(angle)*forward*dt*5,player.position.y);
  player.position.x=movement.x;player.position.z=movement.z;
  if(player.position.length()>PARK_RADIUS-3)player.position.setLength(PARK_RADIUS-3);parkJump.tick(dt);player.position.y=groundHeight(player.position.x,player.position.z)+parkJump.height;owner.animate(elapsed,forward!==0,parkJump.height>0?'jump':null);
 }
-rideButton.hidden=!parkRide&&!nearbyRide(player.position.x,player.position.z);rideButton.textContent=(parkRide==='swing'?t('swingHelp')+' · '+t('leaveRide'):t(parkRide?'leaveRide':nearbyRide(player.position.x,player.position.z)==='swing'?'useSwing':nearbyRide(player.position.x,player.position.z)==='slide'?'useSlide':nearbyRide(player.position.x,player.position.z)==='sand'?'useSand':'useMonkey'));
+rideButton.hidden=parkRide==='fall'||!parkRide&&!nearbyRide(player.position.x,player.position.z);rideButton.textContent=(parkRide==='swing'?t('swingHelp')+' · '+t('leaveRide'):t(parkRide?'leaveRide':nearbyRide(player.position.x,player.position.z)==='swing'?'useSwing':nearbyRide(player.position.x,player.position.z)==='slide'?'useSlide':nearbyRide(player.position.x,player.position.z)==='sand'?'useSand':'useMonkey'));
 const route=dogDestination(elapsed);const dest=new THREE.Vector3(route.x,0,route.z);const dir=dest.sub(dog.position);dir.y=0;if(dir.length()>.2){dir.normalize();const dogMove=moveAroundObjects(dog.position.x,dog.position.z,dog.position.x+dir.x*dt*2,dog.position.z+dir.z*dt*2,0);dog.position.x=dogMove.x;dog.position.z=dogMove.z;dog.rotation.y=Math.atan2(dir.x,dir.z);}dog.position.y=groundHeight(dog.position.x,dog.position.z)+Math.sin(elapsed*14)*.035;action.disabled=parkRide?true:stage==='collect'?false:player.position.distanceTo(dog.position)>=3;}if(stage==='timing'&&capture)updateCapture(dt);if(stage==='wash'){if(bubbles.some(b=>economy.canPayAmount(b.price)))care.tickWash(dt*.45);updateCareHud();if(care.comfort<=0)escapeCare();}
 if(stage==='rinse')updateShower();
 if(stage==='rinse'&&rinseZone!==null){const done=care.rinse(dt,rinseZone);syncSoap();updateCareHud();if(elapsed-lastWaterSound>.5){sound.play('water');lastWaterSound=elapsed;}if(done){sound.play('happy');enterCare();}}

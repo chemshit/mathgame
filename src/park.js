@@ -28,8 +28,14 @@ export function slidePosition(time){
 
 export const PARK_RADIUS=70;
 export class MonkeyChallenge {
- constructor(random=Math.random){this.random=random;this.step=0;this.total=8;this.remaining=15;this.done=false;this.nextQuestion();}
+ constructor(random=Math.random){this.random=random;this.step=0;this.total=8;this.limit=20;this.remaining=this.limit;this.done=false;this.failed=false;this.nextQuestion();}
  nextQuestion(){this.left=2+Math.floor(this.random()*9);this.right=2+Math.floor(this.random()*9);}
- tick(dt){if(!this.done){this.remaining=Math.max(0,this.remaining-dt);if(this.remaining===0)this.done=true;}}
- answer(value){if(this.done||!/^\d+$/.test(String(value))||Number(value)!==this.left*this.right)return false;this.step++;this.done=this.step===this.total;if(!this.done){this.remaining=15;this.nextQuestion();}return true;}
+ tick(dt){if(!this.done){this.remaining=Math.max(0,this.remaining-dt);if(this.remaining===0){this.done=true;this.failed=true;}}}
+ answer(value){if(this.done)return false;if(!/^\d+$/.test(String(value))||Number(value)!==this.left*this.right){this.done=true;this.failed=true;return false;}this.step++;this.done=this.step===this.total;if(!this.done){this.remaining=this.limit;this.nextQuestion();}return true;}
+}
+export class SandChallenge {
+ constructor(random=Math.random){this.random=random;this.step=0;this.total=5;this.done=false;this.nextQuestion();}
+ nextQuestion(){const a=2+Math.floor(this.random()*9),b=2+Math.floor(this.random()*9);this.operation=['+','−','×'][this.step%3];this.left=this.operation==='−'?Math.max(a,b):a;this.right=this.operation==='−'?Math.min(a,b):b;}
+ get answerValue(){return this.operation==='+'?this.left+this.right:this.operation==='−'?this.left-this.right:this.left*this.right;}
+ answer(value){if(this.done)return false;if(!/^\d+$/.test(String(value))||Number(value)!==this.answerValue){this.step=0;this.nextQuestion();return false;}this.step++;this.done=this.step===this.total;if(!this.done)this.nextQuestion();return true;}
 }
